@@ -1,32 +1,28 @@
 require("dotenv").config();
 
-const app = require("./app");
 const { sequelize } = require("./models");
-
-const PORT = process.env.PORT || 8083;
 
 const seedInterestCategory = require("./seeders/interestCategorySeeder");
 const seedInterests = require("./seeders/interestSeeder");
 const seedVisionCategory = require("./seeders/visionCategorySeeder");
 const seedVisions = require("./seeders/visionSeeder");
 
-sequelize
-  .sync({ alter: false })
-  .then(async() => {
-    console.log("DB connected and synced");
-    
+(async () => {
+  try {
+    await sequelize.authenticate();
+
     await seedInterestCategory();
     await seedInterests();
 
     await seedVisionCategory();
     await seedVisions();
 
-    app.listen(PORT, () => {
-      console.log(`challenge-svc listening on ${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error("DB connection or sync failed");
+    console.log("Seed completed");
+
+    process.exit(0);
+
+  } catch (err) {
     console.error(err);
     process.exit(1);
-  });
+  }
+})();
