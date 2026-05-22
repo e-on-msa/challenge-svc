@@ -39,7 +39,7 @@ exports.getCategories = async (req, res, next) => {
 
 /**
  * [GET] /api/interests/categories/:categoryCode
- * 카테고리별 관심사 조회
+ * 특정 카테고리 세부 관심사 조회
  */
 exports.getList = async (req, res, next) => {
   try {

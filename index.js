@@ -5,21 +5,10 @@ const { sequelize } = require("./models");
 
 const PORT = process.env.PORT || 8083;
 
-const seedInterestCategory = require("./seeders/interestCategorySeeder");
-const seedInterests = require("./seeders/interestSeeder");
-const seedVisionCategory = require("./seeders/visionCategorySeeder");
-const seedVisions = require("./seeders/visionSeeder");
-
 sequelize
   .sync({ alter: false })
-  .then(async() => {
+  .then(() => {
     console.log("DB connected and synced");
-    
-    await seedInterestCategory();
-    await seedInterests();
-
-    await seedVisionCategory();
-    await seedVisions();
 
     app.listen(PORT, () => {
       console.log(`challenge-svc listening on ${PORT}`);

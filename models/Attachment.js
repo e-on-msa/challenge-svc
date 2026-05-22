@@ -24,7 +24,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
   }, {
-    tableName: 'Attachment',
+    tableName: 'attachments',
     timestamps: false,
   });
 

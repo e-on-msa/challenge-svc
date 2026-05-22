@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
     }, {
-      tableName: 'Bookmarks',
+      tableName: 'bookmarks',
       timestamps: false,
       indexes: [
         {
