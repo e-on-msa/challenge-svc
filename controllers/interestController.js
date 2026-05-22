@@ -43,6 +43,14 @@ exports.getCategories = async (req, res, next) => {
  */
 exports.getList = async (req, res, next) => {
   try {
+    const { categoryCode } = req.params;
+    const category = await InterestCategory.findByPk(categoryCode);
+    if (!category) {
+      return res
+        .status(404)
+        .json({message:"존재하지 않는 관심사 카테고리입니다."});
+    }
+
     const interests = await Interests.findAll({
       where: {
         category_code: req.params.categoryCode,
