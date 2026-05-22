@@ -8,8 +8,9 @@ app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 // 라우터
-app.use("/api/challenges", require("./routes/challengeRoute"));
-app.use("/api/visions", require("./routes/visionRoute"));
+app.use("/api/challenges", require("./routes/challengeRouter"));
+app.use("/api/visions", require("./routes/visionRouter"));
+app.use("/api/interests", require("./routes/interestRouter"));
 
 // 에러 핸들러
 app.use((err, req, res, next) => {
