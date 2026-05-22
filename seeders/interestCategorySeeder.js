@@ -17,14 +17,9 @@ const interestCategoryData = [
 ];
 
 const seedInterestCategories = async () => {
-  const count = await InterestCategory.count();
-
-  if (count > 0) {
-    console.log("InterestCategory seed skipped");
-    return;
-  }
-
-  await InterestCategory.bulkCreate(interestCategoryData);
+  await InterestCategory.bulkCreate(interestCategoryData, {
+    updateOnDuplicate: ["category_name"],
+  });
   console.log("InterestCategory seed completed");
 };
 

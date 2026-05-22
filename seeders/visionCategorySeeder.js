@@ -18,14 +18,9 @@ const visionCategoryData = [
 ];
 
 const seedVisionCategories = async () => {
-  const count = await VisionCategory.count();
-
-  if (count > 0) {
-    console.log("VisionCategory seed skipped");
-    return;
-  }
-
-  await VisionCategory.bulkCreate(visionCategoryData);
+  await VisionCategory.bulkCreate(visionCategoryData, {
+    updateOnDuplicate: ["category_name"],
+  });
   console.log("VisionCategory seed completed");
 };
 
