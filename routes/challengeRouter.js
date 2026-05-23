@@ -17,5 +17,6 @@ router.post(
 router.get("/", challengeCtrl.list);
 router.patch("/:id/state", isLoggedIn, challengeCtrl.changeState);
 router.get("/:id", challengeCtrl.detail);
+router.patch("/:id", isLoggedIn, challengeCtrl.update);
 
 module.exports = router;

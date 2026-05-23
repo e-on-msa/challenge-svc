@@ -454,6 +454,99 @@ exports.detail = async (req, res, next) => {
 };
 
 /**
+ * [PATCH] /api/challenges/:id
+ * 챌린지 수정
+ */
+exports.update = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const body = req.body;
+    const userId = req.user.user_id;
+
+    const challenge = await Challenge.findByPk(id);
+
+    if (!challenge) {
+      return res.status(404).json({
+        error: "챌린지를 찾을 수 없습니다.",
+      });
+    }
+
+    if (challenge.user_id !== userId) {
+      return res.status(403).json({
+        error: "챌린지 수정 권한이 없습니다.",
+      });
+    }
+
+    const updatable = [
+      "title",
+      "description",
+      "minimum_age",
+      "maximum_age",
+      "maximum_people",
+      "application_deadline",
+      "start_date",
+      "end_date",
+      "is_recurring",
+      "repeat_type",
+      "intermediate_participation",
+      "creator_contact",
+    ];
+
+    updatable.forEach((field) => {
+      if (body[field] !== undefined) {
+        challenge[field] = body[field];
+      }
+    });
+
+    // challenge_state 변경 허용
+    if (body.challenge_state !== undefined) {
+      const allowed = ["ACTIVE", "CLOSED", "CANCELLED"];
+
+      if (!allowed.includes(body.challenge_state)) {
+        return res.status(400).json({
+          error: "잘못된 상태 값",
+        });
+      }
+      challenge.challenge_state = body.challenge_state;
+    }
+
+    await challenge.save();
+ 
+    // 요일 수정
+    if (body.days !== undefined) {
+      await ChallengeDay.destroy({
+        where: { challenge_id: id },
+      });
+
+      if (body.is_recurring && body.days.length > 0) {
+        await ChallengeDay.bulkCreate(
+          body.days.map((day) => ({
+            challenge_id: id,
+            day_of_week: day,
+          }))
+        );
+      }
+    }
+
+    // 관심사/비전 수정
+    if (body.interestIds !== undefined) {
+      await challenge.setInterests(body.interestIds);
+    }
+
+    if (body.visionIds !== undefined) {
+      await challenge.setVisions(body.visionIds);
+    }
+
+    res.status(200).json({
+      message: "챌린지가 수정되었습니다.",
+      challenge_id: challenge.challenge_id,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
  * [PATCH] /api/challenges/:id/state
  * 챌린지 상태 변경
  */
