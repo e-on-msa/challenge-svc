@@ -531,33 +531,50 @@ exports.update = async (req, res, next) => {
       challenge.challenge_state = body.challenge_state;
     }
 
-    await challenge.save();
- 
-    // 요일 수정
-    if (body.days !== undefined) {
-      await ChallengeDay.destroy({
-        where: { challenge_id: id },
-      });
+    await sequelize.transaction(async (t) => {
+      await challenge.save({ transaction: t });
 
-      if (body.is_recurring && body.days.length > 0) {
-        await ChallengeDay.bulkCreate(
-          body.days.map((day) => ({
-            challenge_id: id,
-            day_of_week: day,
-          }))
-        );
+      if (body.days !== undefined) {
+        if (!Array.isArray(body.days)) {
+          return res.status(400).json({
+            error: "days는 배열이어야 합니다.",
+          });
+        }
+
+        await ChallengeDay.destroy({
+          where: { challenge_id: id },
+          transaction: t,
+        });
+
+        const nextIsRecurring =
+          body.is_recurring !== undefined
+            ? body.is_recurring
+            : challenge.is_recurring;
+
+        if (nextIsRecurring && body.days.length > 0) {
+          await ChallengeDay.bulkCreate(
+            body.days.map((day) => ({
+              challenge_id: id,
+              day_of_week: day,
+            })),
+            { transaction: t }
+          );
+        }
       }
-    }
 
-    // 관심사/비전 수정
-    if (body.interestIds !== undefined) {
-      await challenge.setInterests(body.interestIds);
-    }
+      if (body.interestIds !== undefined) {
+        await challenge.setInterests(body.interestIds, {
+          transaction: t,
+        });
+      }
 
-    if (body.visionIds !== undefined) {
-      await challenge.setVisions(body.visionIds);
-    }
-
+      if (body.visionIds !== undefined) {
+        await challenge.setVisions(body.visionIds, {
+          transaction: t,
+        });
+      }
+    });
+    
     res.status(200).json({
       message: "챌린지가 수정되었습니다.",
       challenge_id: challenge.challenge_id,

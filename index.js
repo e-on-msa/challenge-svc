@@ -15,7 +15,6 @@ sequelize
     });
   })
   .catch((err) => {
-    console.error("DB connection or sync failed");
-    console.error(err);
+    console.error("DB connection or sync failed:", err);
     process.exit(1);
   });
