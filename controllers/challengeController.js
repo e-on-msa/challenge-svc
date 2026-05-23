@@ -39,14 +39,25 @@ async function closeExpiredRecruiting() {
  * [POST] /api/challenges
  * 챌린지 생성
  */
-exports.create = async (req, res, next) => {
-  const body = req.body.meta ? JSON.parse(req.body.meta) : req.body;
+exports.create = async (req, res, next) => { 
+  
+  let body = req.body;
 
   const filesObj = req.files ?? {};
   const photosArr = filesObj.photos || [];
   const consentsArr = filesObj.consents || [];
-
+  
   try {
+    if (req.body.meta) {
+      try {
+        body = JSON.parse(req.body.meta);
+      } catch (e) {
+        return res.status(400).json({
+          error: "meta JSON 형식이 올바르지 않습니다.",
+        });
+      }
+    }
+
     const userId = req.user.user_id;
     const userType = req.user.type;
 
@@ -215,6 +226,12 @@ exports.list = async (req, res, next) => {
     
     if (dateStr) {
       const target = new Date(dateStr);
+
+      if (Number.isNaN(target.getTime())) {
+        return res.status(400).json({
+          error: "유효하지 않은 date 형식입니다.",
+        });
+      }
 
       where.start_date = { [Op.lte]: target };
       where.end_date = { [Op.gte]: target };
