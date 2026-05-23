@@ -9,6 +9,8 @@ app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 // 라우터
 app.use("/api/challenges", require("./routes/challengeRouter"));
+app.use("/api/challenges", require("./routes/bookmarkRouter"));
+
 app.use("/api/visions", require("./routes/visionRouter"));
 app.use("/api/interests", require("./routes/interestRouter"));
 
