@@ -83,7 +83,7 @@ ChallengeInterest.belongsTo(Interests, {
   onDelete: "CASCADE",
 });
 
-// Challenge - ChallengeVison
+// Challenge - ChallengeVision
 Challenge.belongsToMany(Visions, {
     through: ChallengeVision,
     foreignKey: "challenge_id",
@@ -95,7 +95,7 @@ ChallengeVision.belongsTo(Challenge, {
   onDelete: "CASCADE",
 });
 
-// ChallengeVison - Visions
+// ChallengeVision - Visions
 Visions.belongsToMany(Challenge, {
     through: ChallengeVision,
     foreignKey: "vision_id",

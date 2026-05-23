@@ -32,7 +32,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
   }, {
-    tableName: 'Review',
+    tableName: 'reviews',
     timestamps: false,
   });
 

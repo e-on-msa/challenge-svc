@@ -77,7 +77,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
   }, {
-    tableName: 'Challenge',
+    tableName: 'challenges',
     timestamps: true,
     createdAt: 'created_at',
     updatedAt: 'updated_at',

@@ -16,7 +16,7 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true, // 복합 PK
     },
   }, {
-    tableName: 'Challenge_Days',
+    tableName: 'challenge_days',
     timestamps: false,
   });
 

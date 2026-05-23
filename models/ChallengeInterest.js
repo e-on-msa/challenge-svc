@@ -17,8 +17,14 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
   }, {
-    tableName: 'Challenge_Interest',
+    tableName: 'challenge_interests',
     timestamps: false,
+    indexes: [
+          {
+            unique: true,
+            fields: ["challenge_id", "interest_id",],
+          },
+    ],
   });
 
   return ChallengeInterest;
