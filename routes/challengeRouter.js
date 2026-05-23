@@ -18,5 +18,6 @@ router.get("/", challengeCtrl.list);
 router.patch("/:id/state", isLoggedIn, challengeCtrl.changeState);
 router.get("/:id", challengeCtrl.detail);
 router.patch("/:id", isLoggedIn, challengeCtrl.update);
+router.delete("/:id", isLoggedIn, challengeCtrl.remove);
 
 module.exports = router;

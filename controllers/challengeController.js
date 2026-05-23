@@ -4,10 +4,14 @@ const {
   Challenge,
   ChallengeDay,
   Attachment,
-  Interests,
-  Visions,
+  Bookmark,
+  ChallengeInterest,
+  ChallengeVision,
   ParticipatingChallenge,
   ParticipatingAttendance,
+  Review,
+  Interests,
+  Visions,
 } = require("../models");
 
 /** ---------------- 공용 헬퍼: KST 기준 현재시각 & 자동 마감 ---------------- **/
@@ -541,6 +545,51 @@ exports.update = async (req, res, next) => {
       message: "챌린지가 수정되었습니다.",
       challenge_id: challenge.challenge_id,
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * [DELETE] /api/challenges/:id
+ * 챌린지 삭제
+ */
+exports.remove = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.user_id;
+
+    const challenge = await Challenge.findByPk(id);
+
+    if (!challenge) {
+      return res.status(404).json({
+        error: "챌린지를 찾을 수 없습니다.",
+      });
+    }
+
+    if (challenge.user_id !== userId) {
+      return res.status(403).json({
+        error: "챌린지 삭제 권한이 없습니다.",
+      });
+    }
+
+    // 관계 데이터 삭제
+    await sequelize.transaction(async (t) => {
+      await ChallengeDay.destroy({ where: { challenge_id: id }, transaction: t });
+      await ChallengeInterest.destroy({ where: { challenge_id: id }, transaction: t });
+      await ChallengeVision.destroy({ where: { challenge_id: id }, transaction: t });
+      await Review.destroy({ where: { challenge_id: id }, transaction: t });
+      await ParticipatingChallenge.destroy({ where: { challenge_id: id }, transaction: t });
+      await Bookmark.destroy({ where: { challenge_id: id }, transaction: t });
+      await Attachment.destroy({ where: { challenge_id: id }, transaction: t });
+
+      await Challenge.destroy({
+        where: { challenge_id: id },
+        transaction: t,
+      });
+    });
+
+    res.status(204).send();
   } catch (err) {
     next(err);
   }
