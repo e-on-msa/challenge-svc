@@ -1,4 +1,5 @@
 const { Review, Challenge } = require("../models");
+const { getUsersByIds } = require("../services/userServiceClient");
 
 /**
  * [POST] /api/challenges/:id/reviews
@@ -10,7 +11,7 @@ exports.create = async (req, res, next) => {
     const userId = req.user.user_id;
     const { rating_stars, text } = req.body;
 
-    if (rating_stars === undefined || text === undefined) {
+    if (rating_stars == null || typeof text !== "string" || text.trim() === "") {
       return res.status(400).json({ error: "rating_stars와 text는 필수입니다." });
     }
 
@@ -48,8 +49,11 @@ exports.create = async (req, res, next) => {
       review,
     });
   } catch (err) {
+    if (err instanceof UniqueConstraintError) {
+        return res.status(409).json({ error: "이미 리뷰를 작성했습니다." });
+    }
     next(err);
-  }
+    }
 };
 
 /**
