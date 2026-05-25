@@ -11,8 +11,10 @@ exports.getUsersByIds = async (userIds) => {
     params: {
       ids: userIds.join(","),
     },
+    timeout: 2000,
   });
 
+  const users = Array.isArray(response.data) ? response.data : [];
   return response.data.reduce((map, user) => {
     map[user.user_id] = user;
     return map;

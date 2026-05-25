@@ -1,3 +1,4 @@
+const { UniqueConstraintError } = require("sequelize");
 const { Review, Challenge } = require("../models");
 const { getUsersByIds } = require("../services/userServiceClient");
 
