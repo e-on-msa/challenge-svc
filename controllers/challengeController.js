@@ -671,3 +671,193 @@ exports.changeState = async (req, res, next) => {
     next(err);
   }
 };
+
+/**
+ * [GET] /api/challenges/my/participated
+ * 내가 신청한 챌린지 활동 내역 조회 (참여 이력)
+ */
+/**
+ * [GET] /api/challenges/my/participated
+ * 내가 신청한 챌린지 활동 내역 조회
+ */
+exports.myParticipated = async (req, res, next) => {
+  try {
+    const userId = req.user.user_id;
+    const { from, to, keyword, page, limit } = req.query;
+
+    const usePaging = page !== undefined || limit !== undefined;
+    const currentPage = Number(page) || 1;
+    const pageSize = Number(limit) || 10;
+
+    if (page !== undefined && (!Number.isInteger(currentPage) || currentPage < 1)) {
+      return res.status(400).json({ error: "page는 1 이상의 정수여야 합니다." });
+    }
+
+    if (limit !== undefined && (!Number.isInteger(pageSize) || pageSize < 1)) {
+      return res.status(400).json({ error: "limit는 1 이상의 정수여야 합니다." });
+    }
+
+    const offset = (currentPage - 1) * pageSize;
+    const participationWhere = { user_id: userId };
+    const challengeWhere = {};
+
+    const parseDate = (value, field) => {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) {
+        return { error: `${field} 날짜 형식이 올바르지 않습니다.` };
+      }
+      return { date };
+    };
+
+    if (from || to) {
+      const fromDate = from ? parseDate(from, "from") : null;
+      const toDate = to ? parseDate(to, "to") : null;
+
+      if (fromDate?.error) return res.status(400).json({ error: fromDate.error });
+      if (toDate?.error) return res.status(400).json({ error: toDate.error });
+
+      challengeWhere.start_date = {
+        ...(fromDate?.date && { [Op.gte]: fromDate.date }),
+        ...(toDate?.date && { [Op.lte]: toDate.date }),
+      };
+    }
+
+    if (keyword) {
+      challengeWhere.title = { [Op.like]: `%${keyword}%` };
+    }
+
+    const queryOptions = {
+      where: participationWhere,
+      include: [
+        {
+          model: Challenge,
+          where: Object.keys(challengeWhere).length ? challengeWhere : undefined,
+          include: [
+            { model: ChallengeDay, as: "days", attributes: ["day_of_week"] },
+            { model: Attachment, as: "attachments", attributes: ["url"] },
+            { model: Interests, as: "interests", through: { attributes: [] } },
+            { model: Visions, as: "visions", through: { attributes: [] } },
+          ],
+        },
+      ],
+      order: [["participating_id", "DESC"]],
+      distinct: true,
+    };
+
+    if (usePaging) {
+      queryOptions.limit = pageSize;
+      queryOptions.offset = offset;
+    }
+
+    const result = await ParticipatingChallenge.findAndCountAll(queryOptions);
+
+    res.status(200).json({
+      challenges: result.rows.map((p) => ({
+        ...p.Challenge.toJSON(),
+        my_participation: {
+          participating_id: p.participating_id,
+          participating_state: p.participating_state,
+        },
+      })),
+      totalCount: result.count,
+      totalPages: usePaging ? Math.ceil(result.count / pageSize) : 1,
+      currentPage: usePaging ? currentPage : 1,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * [GET] /api/challenges/my/created
+ * 내가 개설한 챌린지 활동 내역 조회
+ */
+exports.myCreated = async (req, res, next) => {
+  try {
+    const userId = req.user.user_id;
+    const { from, to, keyword, page, limit } = req.query;
+
+    const usePaging = page !== undefined || limit !== undefined;
+    const currentPage = Number(page) || 1;
+    const pageSize = Number(limit) || 10;
+
+    if (page !== undefined && (!Number.isInteger(currentPage) || currentPage < 1)) {
+      return res.status(400).json({ error: "page는 1 이상의 정수여야 합니다." });
+    }
+
+    if (limit !== undefined && (!Number.isInteger(pageSize) || pageSize < 1)) {
+      return res.status(400).json({ error: "limit는 1 이상의 정수여야 합니다." });
+    }
+
+    const offset = (currentPage - 1) * pageSize;
+    const where = { user_id: userId };
+
+    const parseDate = (value, field) => {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) {
+        return { error: `${field} 날짜 형식이 올바르지 않습니다.` };
+      }
+      return { date };
+    };
+
+    if (from || to) {
+      const fromDate = from ? parseDate(from, "from") : null;
+      const toDate = to ? parseDate(to, "to") : null;
+
+      if (fromDate?.error) return res.status(400).json({ error: fromDate.error });
+      if (toDate?.error) return res.status(400).json({ error: toDate.error });
+
+      where.created_at = {
+        ...(fromDate?.date && { [Op.gte]: fromDate.date }),
+        ...(toDate?.date && { [Op.lte]: toDate.date }),
+      };
+    }
+
+    if (keyword) {
+      where.title = { [Op.like]: `%${keyword}%` };
+    }
+
+    const queryOptions = {
+      where,
+      include: [
+        { model: ChallengeDay, as: "days", attributes: ["day_of_week"] },
+        { model: Attachment, as: "attachments", attributes: ["url", "attachment_type"] },
+        {
+          model: ParticipatingChallenge,
+          as: "participants",
+          attributes: ["participating_id", "participating_state"],
+        },
+      ],
+      order: [["challenge_id", "DESC"]],
+      distinct: true,
+    };
+
+    if (usePaging) {
+      queryOptions.limit = pageSize;
+      queryOptions.offset = offset;
+    }
+
+    const result = await Challenge.findAndCountAll(queryOptions);
+
+    res.status(200).json({
+      challenges: result.rows.map((challenge) => ({
+        challenge_id: challenge.challenge_id,
+        title: challenge.title,
+        status: challenge.status,
+        challenge_state: challenge.challenge_state,
+        application_deadline: challenge.application_deadline,
+        start_date: challenge.start_date,
+        end_date: challenge.end_date,
+        applicants_count: challenge.participants?.length ?? 0,
+        participants: challenge.participants,
+        attachments: challenge.attachments,
+        days: challenge.days,
+      })),
+      totalCount: result.count,
+      totalPages: usePaging ? Math.ceil(result.count / pageSize) : 1,
+      currentPage: usePaging ? currentPage : 1,
+    });
+  } catch (err) {
+    next(err);
+  }
+};

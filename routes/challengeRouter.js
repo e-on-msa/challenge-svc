@@ -24,6 +24,13 @@ router.get("/:id", challengeCtrl.detail);
 router.patch("/:id", isLoggedIn, challengeCtrl.update);
 router.delete("/:id", isLoggedIn, challengeCtrl.remove);
 
+/** ---------------- 마이페이지용 ---------------- **/
+// 내가 신청한 챌린지 활동 내역 조회 (참여 이력)
+router.get('/my/participated', isLoggedIn, challengeCtrl.myParticipated);
+
+// 내가 개설한 챌린지 활동 내역 조회
+router.get('/my/created', isLoggedIn, challengeCtrl.myCreated);
+
 /** ---------------- 리뷰 ---------------- **/
 // 리뷰 작성
 router.post("/:id/reviews", isLoggedIn, reviewCtrl.create);
