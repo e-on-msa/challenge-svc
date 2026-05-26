@@ -672,13 +672,10 @@ exports.changeState = async (req, res, next) => {
   }
 };
 
+
 /**
  * [GET] /api/challenges/my/participated
  * 내가 신청한 챌린지 활동 내역 조회 (참여 이력)
- */
-/**
- * [GET] /api/challenges/my/participated
- * 내가 신청한 챌린지 활동 내역 조회
  */
 exports.myParticipated = async (req, res, next) => {
   try {
