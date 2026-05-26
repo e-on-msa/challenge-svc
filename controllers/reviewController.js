@@ -86,11 +86,17 @@ exports.list = async (req, res, next) => {
       order: [["review_date", "DESC"]],
     });
 
-    // TODO: 확인 필요
+    // TODO: 연동 후 확인 필요
     // user-svc에서 user_id와 name 가져오기
     const userIds = [...new Set(reviews.map((review) => review.user_id))];
 
-    const userMap = await getUsersByIds(userIds);
+    let userMap = {};
+
+    try {
+      userMap = await getUsersByIds(userIds);
+    } catch (e) {
+      console.warn("[user-svc] 조회 실패", e.message);
+    }
 
     const result = reviews.map((review) => {
       const json = review.toJSON();
