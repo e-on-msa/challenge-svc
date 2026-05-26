@@ -103,10 +103,7 @@ exports.remove = async (req, res, next) => {
       return res.status(404).json({ error: "첨부파일을 찾을 수 없습니다." });
     }
 
-    if (
-      process.env.NODE_ENV !== "production" &&
-      attachment.url?.startsWith("/uploads/")
-    ) {
+    if (attachment.url?.startsWith("/uploads/")) {
       const relativePath = attachment.url.replace(/^\/+/, "");
 
       // 프로젝트 실행 위치 기준으로 실제 파일 경로 생성
