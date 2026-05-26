@@ -47,7 +47,7 @@ router.post(
 router.get("/:id/attachments",attachmentCtrl.list);
 
 /** ---------------- 출석 ---------------- **/
-// 챌린지별 출석 조회
+// 챌린지별 출석 목록 조회
 router.get('/:id/attendance', attendanceCtrl.listByChallenge);
 
 

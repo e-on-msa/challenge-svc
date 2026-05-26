@@ -9,7 +9,7 @@ const { getUsersByIds } = require("../services/userServiceClient");
 
 /**
  * [POST] /api/participations/:id/attendances
- * 출석 추가
+ * 출석 기록 추가
  */
 exports.add = async (req, res, next) => {
   try {
@@ -63,7 +63,7 @@ exports.add = async (req, res, next) => {
 
 /**
  * [GET] /api/challenges/:id/attendance
- * 챌린지별 출석 조회
+ * 챌린지별 출석 목록 조회
  */
 exports.listByChallenge = async (req, res, next) => {
   try {
@@ -161,6 +161,111 @@ exports.listByChallenge = async (req, res, next) => {
     });
 
     res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * [PATCH] /api/attendances/:id
+ * 출석 기록 수정
+ */
+exports.update = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { attendance_state, memo } = req.body;
+
+    const attendance = await ParticipatingAttendance.findByPk(id);
+
+    if (!attendance) {
+      return res.status(404).json({ error: "출석 기록을 찾을 수 없습니다." });
+    }
+
+    if (attendance_state !== undefined) {
+      const allowedStates = ["출석", "결석"];
+
+      if (!allowedStates.includes(attendance_state)) {
+        return res.status(400).json({
+          error: "attendance_state는 출석 또는 결석이어야 합니다.",
+        });
+      }
+
+      attendance.attendance_state = attendance_state;
+    }
+
+    if (memo !== undefined) {
+      attendance.memo = memo;
+    }
+
+    await attendance.save();
+
+    res.status(200).json({
+      message: "출석 기록이 수정되었습니다.",
+      attendance,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * [DELETE] /api/attendances/:id
+ * 출석 기록 삭제
+ */
+exports.remove = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const attendance = await ParticipatingAttendance.findByPk(id);
+
+    if (!attendance) {
+      return res.status(404).json({ error: "출석 기록을 찾을 수 없습니다." });
+    }
+
+    await attendance.destroy();
+
+    res.status(204).send();
+
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * [GET] /api/attendances/check-absence
+ * 최근 7일 이내 결석 여부 조회
+ */
+exports.checkAbsence = async (req, res, next) => {
+  try {
+    const { user_id } = req.query;
+
+    if (!user_id) {
+      return res.status(400).json({ error: "user_id는 필수입니다." });
+    }
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const hasAbsence = await ParticipatingAttendance.findOne({
+      include: [{
+          model: ParticipatingChallenge,
+          as: "participant",
+          attributes: [],
+          where: { user_id }
+        }],
+
+        where: {
+            attendance_state: "결석",
+            attendance_date: {
+                [Op.gte]: sevenDaysAgo,
+            },
+        },
+    });
+
+    res.status(200).json({
+      hasAbsence: !!hasAbsence
+    });
+
   } catch (err) {
     next(err);
   }
