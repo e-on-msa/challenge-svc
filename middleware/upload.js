@@ -10,17 +10,18 @@ if (
   fs.mkdirSync("uploads");
 }
 
+// 저장 장소 & 파일명 지정
 const storage =
   process.env.NODE_ENV === "production"
 
-    // 운영 → 메모리에 저장 (S3 업로드용)
+    // 운영 → 메모리에 저장 (GCS 업로드용)
     ? multer.memoryStorage()
 
     // 개발 → 로컬 uploads 저장
     : multer.diskStorage({
         destination: (_req, _file, cb) => {
-          cb(null, "uploads/");
-          },
+          cb(null, "uploads/"); // uploads 폴더에 저장
+        },
         filename: (_req, file, cb) => {
             const ext      = path.extname(file.originalname); // .jpg
             const basename = path.basename(file.originalname, ext);
