@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 
-const ctrl = require("../controllers/attendanceController");
 const { isLoggedIn } = require("../middleware/auth");
+const ctrl = require("../controllers/attendanceController");
 
 // 출석 기록 수정
 router.patch("/:id", isLoggedIn, ctrl.update);

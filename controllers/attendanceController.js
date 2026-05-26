@@ -15,6 +15,7 @@ exports.add = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { attendance_date, attendance_state, memo } = req.body;
+    const requesterId = req.user?.user_id;
 
     if (!attendance_date) {
       return res.status(400).json({ error: "attendance_date는 필수입니다." });
@@ -31,6 +32,11 @@ exports.add = async (req, res, next) => {
 
     if (!participation) {
       return res.status(404).json({ error: "참여 기록을 찾을 수 없습니다." });
+    }
+
+    // 출석 기록 생성 권한 검증
+    if (!requesterId || participation.user_id !== requesterId) {
+      return res.status(403).json({ error: "출석 기록 생성 권한이 없습니다." });
     }
 
     // 같은 날짜에 중복 출석 방지
@@ -175,7 +181,13 @@ exports.update = async (req, res, next) => {
     const { id } = req.params;
     const { attendance_state, memo } = req.body;
 
-    const attendance = await ParticipatingAttendance.findByPk(id);
+    const attendance = await ParticipatingAttendance.findByPk(id, {
+        include: [{
+            model: ParticipatingChallenge,
+            as: "participant",
+            attributes: ["user_id"]
+        }],
+    });
 
     if (!attendance) {
       return res.status(404).json({ error: "출석 기록을 찾을 수 없습니다." });
@@ -216,7 +228,13 @@ exports.remove = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const attendance = await ParticipatingAttendance.findByPk(id);
+    const attendance = await ParticipatingAttendance.findByPk(id, {
+        include: [{
+            model: ParticipatingChallenge,
+            as: "participant",
+            attributes: ["user_id"]
+        }],
+    });
 
     if (!attendance) {
       return res.status(404).json({ error: "출석 기록을 찾을 수 없습니다." });
@@ -246,6 +264,8 @@ exports.checkAbsence = async (req, res, next) => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
+    const sevenDaysAgoDate = formatDateOnly(sevenDaysAgo);
+
     const hasAbsence = await ParticipatingAttendance.findOne({
       include: [{
           model: ParticipatingChallenge,
@@ -257,7 +277,7 @@ exports.checkAbsence = async (req, res, next) => {
         where: {
             attendance_state: "결석",
             attendance_date: {
-                [Op.gte]: sevenDaysAgo,
+                [Op.gte]: sevenDaysAgoDate,
             },
         },
     });
