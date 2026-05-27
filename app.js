@@ -16,6 +16,8 @@ app.use("/api/attachments", require("./routes/attachmentRouter"));
 app.use("/api/attendances", require("./routes/attendanceRouter"));
 app.use("/api/participations", require("./routes/participationRouter"));
 
+app.use("/api/admin/challenges", require("./routes/adminChallengeRouter"));
+
 app.use("/api/visions", require("./routes/visionRouter"));
 app.use("/api/interests", require("./routes/interestRouter"));
 

@@ -359,9 +359,7 @@ exports.list = async (req, res, next) => {
     res.status(200).json({
       totalItems: count,
       challenges: rows,
-      totalPages: Math.ceil(
-        count / Number(limit)
-      ),
+      totalPages: Math.ceil(count / Number(limit)),
       currentPage: Number(page),
     });
   } catch (err) {
@@ -369,6 +367,7 @@ exports.list = async (req, res, next) => {
   }
 };
 
+// TODO: user-svc와 연동 후 확인 필요
 /**
  * [GET] /api/challenges/:id
  * 챌린지 상세 조회
@@ -418,9 +417,20 @@ exports.detail = async (req, res, next) => {
     });
 
     if (!challenge) {
-      return res.status(404).json({
-        error: "존재하지 않는 챌린지입니다.",
-      });
+      return res.status(404).json({ error: "존재하지 않는 챌린지입니다." });
+    }
+
+    let creator = {
+      user_id: challenge.user_id,
+      name: null,
+      email: null,
+    };
+
+    try {
+      const users = await getUsersByIds([ challenge.user_id ]);
+      creator = users[ challenge.user_id ] ?? creator;
+    } catch (err) {
+      console.warn("[user-svc]", err.message);
     }
 
     const isBookmarked = userId
@@ -452,14 +462,12 @@ exports.detail = async (req, res, next) => {
       age_range: `${challenge.minimum_age} ~ ${challenge.maximum_age}`,
       maximum_people: challenge.maximum_people,
       application_deadline: challenge.application_deadline,
-      duration: {
-        start: challenge.start_date,
-        end: challenge.end_date,
-      },
+      duration: { start: challenge.start_date, end: challenge.end_date },
       is_recurring: challenge.is_recurring,
       repeat_type: challenge.repeat_type,
       intermediate_participation: challenge.intermediate_participation,
       challenge_state: challenge.challenge_state,
+      creator,
       status: challenge.status,
       days: challenge.days.map((day) => day.day_of_week),
       attachments: challenge.attachments,
@@ -672,13 +680,10 @@ exports.changeState = async (req, res, next) => {
   }
 };
 
+
 /**
  * [GET] /api/challenges/my/participated
  * 내가 신청한 챌린지 활동 내역 조회 (참여 이력)
- */
-/**
- * [GET] /api/challenges/my/participated
- * 내가 신청한 챌린지 활동 내역 조회
  */
 exports.myParticipated = async (req, res, next) => {
   try {

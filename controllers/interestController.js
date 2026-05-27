@@ -31,14 +31,17 @@ exports.getCategories = async (req, res, next) => {
       order: [["category_code", "ASC"]],
     });
 
-    res.status(200).json(categories);
+    res.status(200).json({
+      success: true,
+      categories
+    });
   } catch (err) {
     next(err);
   }
 };
 
 /**
- * [GET] /api/interests/categories/:categoryCode
+ * [GET] /api/interests/list/:categoryCode
  * 특정 카테고리 세부 관심사 조회
  */
 exports.getList = async (req, res, next) => {
@@ -62,7 +65,10 @@ exports.getList = async (req, res, next) => {
       order: [["interest_id", "ASC"]],
     });
 
-    res.status(200).json(interests);
+    res.status(200).json({
+      success: true,
+      interests,
+    });
   } catch (err) {
     next(err);
   }
