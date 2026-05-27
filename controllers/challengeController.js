@@ -185,9 +185,9 @@ exports.create = async (req, res, next) => {
 
     res.status(201).json({
       message: isMunicipality
-        ? "챌린지가 개설되어 즉시 공개되었습니다."
-        : "챌린지 개설이 신청되었습니다. 관리자 승인 후 공개됩니다.",
-      challenge_id: challenge.challenge_id,
+        ? '챌린지가 개설되어 즉시 공개되었습니다.'
+        : '챌린지 개설이 신청되었습니다. 관리자 승인 후 공개됩니다.',
+      challenge_id: challenge.challenge_id
     });
   } catch (err) {
     next(err);
