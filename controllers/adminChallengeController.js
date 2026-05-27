@@ -18,9 +18,8 @@ exports.listPending = async (req, res, next) => {
       order: [["application_deadline", "ASC"]],
     });
 
-    res.status(200).json({
-      challenges,
-    });
+    res.status(200).json(challenges);
+
   } catch (err) {
     next(err);
   }
@@ -49,7 +48,7 @@ exports.detail = async (req, res, next) => {
     if (!challenge) {
       return res.status(404).json({ error: "챌린지를 찾을 수 없습니다." });
     }
-    
+
     let creator = null;
 
     try {
@@ -66,7 +65,7 @@ exports.detail = async (req, res, next) => {
       challenge_id: challenge.challenge_id,
       title: challenge.title,
       description: challenge.description,
-      creator: creator
+       creator: creator
         ? {
             user_id: creator.user_id,
             name: creator.name,
@@ -81,10 +80,7 @@ exports.detail = async (req, res, next) => {
       age_range: `${challenge.minimum_age} ~ ${challenge.maximum_age}`,
       maximum_people: challenge.maximum_people,
       application_deadline: challenge.application_deadline,
-      duration: {
-        start: challenge.start_date,
-        end: challenge.end_date,
-      },
+      duration: { start: challenge.start_date, end: challenge.end_date },
       is_recurring: challenge.is_recurring,
       repeat_type: challenge.repeat_type,
       intermediate_participation: challenge.intermediate_participation,
@@ -108,32 +104,22 @@ exports.approve = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const challenge = await Challenge.findByPk(id, {
-      attributes: [
-        "challenge_id",
-        "title",
-        "status",
-      ],
-    });
+    const [updated] = await Challenge.update(
+      { status: "APPROVED" },
+      { where: { challenge_id: id, status: "PENDING" },}
+    );
 
-    if (!challenge) {
-      return res.status(404).json({ error: "챌린지를 찾을 수 없습니다." });
+    if (updated === 0) {
+      const exists = await Challenge.findByPk(id, {
+        attributes: ["challenge_id"],
+      });
+
+      return exists
+        ? res.status(409).json({ error: "승인 대기 상태의 챌린지만 승인할 수 있습니다." })
+        : res.status(404).json({ error: "챌린지를 찾을 수 없습니다." });
     }
 
-    if (challenge.status !== "PENDING") {
-      return res.status(409).json({ error: "승인 대기 상태의 챌린지만 승인할 수 있습니다." });
-    }
-
-    challenge.status = "APPROVED";
-
-    await challenge.save();
-
-    res.status(200).json({
-      message: "챌린지가 승인되었습니다.",
-      challenge_id: challenge.challenge_id,
-      status: challenge.status,
-    });
-
+    res.sendStatus(204);
   } catch (err) {
     next(err);
   }
@@ -147,26 +133,22 @@ exports.reject = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const challenge = await Challenge.findByPk(id);
+    const [updated] = await Challenge.update(
+      { status: "REJECTED" },
+      { where: { challenge_id: id, status: "PENDING" },}
+    );
 
-    if (!challenge) {
-      return res.status(404).json({ error: "챌린지를 찾을 수 없습니다." });
+    if (updated === 0) {
+      const exists = await Challenge.findByPk(id, {
+        attributes: ["challenge_id"],
+      });
+
+      return exists
+        ? res.status(409).json({ error: "승인 대기 상태의 챌린지만 거절할 수 있습니다." })
+        : res.status(404).json({ error: "챌린지를 찾을 수 없습니다." });
     }
 
-    if (challenge.status !== "PENDING") {
-      return res.status(409).json({ error: "승인 대기 상태의 챌린지만 거절할 수 있습니다." });
-    }
-
-    challenge.status = "REJECTED";
-
-    await challenge.save();
-
-    res.status(200).json({
-      message: "챌린지가 거절되었습니다.",
-      challenge_id: challenge.challenge_id,
-      status: challenge.status,
-    });
-
+    res.sendStatus(204);
   } catch (err) {
     next(err);
   }

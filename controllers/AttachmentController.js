@@ -56,11 +56,7 @@ exports.add = async (req, res, next) => {
 
     // 4) 한꺼번에 Bulk Insert
     const attachments = await Attachment.bulkCreate(rows);
-    res.status(201).json({
-      message: "첨부파일 업로드 완료",
-      attachments,
-    });
-
+    res.status(201).json(attachments);
   } catch (err) {
     next(err);
   }
@@ -80,10 +76,7 @@ exports.list = async (req, res, next) => {
         order: [["attachment_id", "ASC"]],
       });
 
-    res.status(200).json(
-      attachments
-    );
-
+    res.status(200).json(attachments);
   } catch (err) {
     next(err);
   }
@@ -122,7 +115,6 @@ exports.remove = async (req, res, next) => {
     await attachment.destroy();
 
     res.status(204).send();
-
   } catch (err) {
     next(err);
   }

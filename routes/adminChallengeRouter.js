@@ -8,7 +8,7 @@ const adminCtrl = require("../controllers/adminChallengeController");
 router.get("/", isLoggedIn, isAdmin, adminCtrl.listPending);
 
 // 관리자용 챌린지 상세 조회 (모든 상태)
-router.get('/:id', isAdmin, adminCtrl.detail);
+router.get('/:id', isLoggedIn, isAdmin, adminCtrl.detail);
 
 // 챌린지 승인 처리
 router.patch("/:id/approve", isLoggedIn, isAdmin, adminCtrl.approve);

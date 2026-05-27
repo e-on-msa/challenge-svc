@@ -45,10 +45,7 @@ exports.create = async (req, res, next) => {
       text,
     });
 
-    res.status(201).json({
-      message: "리뷰가 작성되었습니다.",
-      review,
-    });
+    res.status(201).json(review);
   } catch (err) {
     if (err instanceof UniqueConstraintError) {
         return res.status(409).json({ error: "이미 리뷰를 작성했습니다." });
@@ -159,10 +156,7 @@ exports.update = async (req, res, next) => {
 
     await review.save();
 
-    res.status(200).json({
-      message: "리뷰가 수정되었습니다.",
-      review,
-    });
+    res.status(200).json(review);
   } catch (err) {
     next(err);
   }

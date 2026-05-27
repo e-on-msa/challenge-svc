@@ -6,6 +6,7 @@ const {
 } = require("../models");
 
 const { getUsersByIds } = require("../services/userServiceClient");
+const formatDateOnly = (date) => date.toISOString().slice(0, 10);
 
 /**
  * [POST] /api/participations/:id/attendances
@@ -58,10 +59,7 @@ exports.add = async (req, res, next) => {
       memo,
     });
 
-    res.status(201).json({
-      message: "출석 기록이 추가되었습니다.",
-      attendance,
-    });
+    res.status(201).json(attendance)
   } catch (err) {
     next(err);
   }
@@ -211,10 +209,7 @@ exports.update = async (req, res, next) => {
 
     await attendance.save();
 
-    res.status(200).json({
-      message: "출석 기록이 수정되었습니다.",
-      attendance,
-    });
+    res.status(200).json(attendance);
   } catch (err) {
     next(err);
   }

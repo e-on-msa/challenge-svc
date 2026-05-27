@@ -10,6 +10,6 @@ router.get("/", interestController.getAll);
 router.get("/categories", interestController.getCategories);
 
 // 카테고리별 세부 관심사 조회
-router.get("/categories/:categoryCode", interestController.getList);
+router.get("/list/:categoryCode", interestController.getList);
 
 module.exports = router;

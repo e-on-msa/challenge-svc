@@ -11,7 +11,7 @@ exports.getUsersByIds = async (userIds) => {
     params: {
       ids: userIds.join(","),
     },
-    timeout: 2000,
+    timeout: 2000, // 2초
   });
 
   const users = Array.isArray(response.data) ? response.data : [];
