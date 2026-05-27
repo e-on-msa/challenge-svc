@@ -13,6 +13,10 @@ const {
   Interests,
   Visions,
 } = require("../models");
+const {
+  assertCanCreateChallenge,
+  assertCanJoinChallenge,
+} = require("../services/userChallengeStatusService");
 
 /** ---------------- 공용 헬퍼: KST 기준 현재시각 & 자동 마감 ---------------- **/
 function nowKST() {
@@ -37,7 +41,7 @@ async function closeExpiredRecruiting() {
 
 /**
  * [POST] /api/challenges
- * 챌린지 생성
+ * 챌린지 개설
  */
 exports.create = async (req, res, next) => { 
   
@@ -48,6 +52,12 @@ exports.create = async (req, res, next) => {
   const consentsArr = filesObj.consents || [];
   
   try {
+    const userId = req.user.user_id;
+    const userType = req.user.type;
+
+    // 챌린지 개설 가능 여부 검증
+    await assertCanCreateChallenge(userId);
+
     if (req.body.meta) {
       try {
         body = JSON.parse(req.body.meta);
@@ -57,10 +67,7 @@ exports.create = async (req, res, next) => {
         });
       }
     }
-
-    const userId = req.user.user_id;
-    const userType = req.user.type;
-
+    
     const {
       title,
       description,
@@ -178,9 +185,9 @@ exports.create = async (req, res, next) => {
 
     res.status(201).json({
       message: isMunicipality
-        ? "챌린지가 개설되어 즉시 공개되었습니다."
-        : "챌린지 개설이 신청되었습니다. 관리자 승인 후 공개됩니다.",
-      challenge_id: challenge.challenge_id,
+        ? '챌린지가 개설되어 즉시 공개되었습니다.'
+        : '챌린지 개설이 신청되었습니다. 관리자 승인 후 공개됩니다.',
+      challenge_id: challenge.challenge_id
     });
   } catch (err) {
     next(err);

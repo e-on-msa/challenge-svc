@@ -15,6 +15,12 @@ exports.isLoggedIn = (req, res, next) => {
   req.user = {
     user_id: userId,
     type: req.headers["x-user-type"],
+    state: req.headers["x-user-state"] || "active",
+    banned_until:
+      req.headers["x-user-banned-until"] &&
+      req.headers["x-user-banned-until"] !== "null"
+        ? req.headers["x-user-banned-until"]
+        : null,
   };
 
   next();
