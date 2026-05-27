@@ -1,0 +1,27 @@
+services:
+  challenge-db:
+    image: mysql:8.0
+    container_name: challenge-db
+    ports:
+      - "${DB_PORT}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+    volumes:
+      - challenge-db-data:/var/lib/mysql
+
+  redis:
+    image: redis:7
+    container_name: eon-redis
+    ports:
+      - "${REDIS_PORT}:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: eon-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+volumes:
+  challenge-db-data:
