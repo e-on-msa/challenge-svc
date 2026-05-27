@@ -23,6 +23,7 @@ sequelize
           "RabbitMQ consumer start failed:",
           err
         );
+        process.exit(1);
       }
     });
   })
