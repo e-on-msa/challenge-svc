@@ -10,6 +10,9 @@ const RABBITMQ_URL = process.env.RABBITMQ_URL || "amqp://localhost";
 const EXCHANGE = process.env.USER_EVENT_EXCHANGE || "user.event";
 const QUEUE = process.env.USER_EVENT_QUEUE || "challenge-svc.user-event.queue";
 
+const DLX = `${EXCHANGE}.dlx`;
+const DLQ = `${QUEUE}.dlq`;
+
 const routingKeys = [
   "user.deactivated",
   "user.suspended",
@@ -47,8 +50,21 @@ async function startUserEventConsumer() {
     durable: true,
   });
 
+  await channel.assertExchange(DLX, "topic", {
+    durable: true,
+  });
+
+  await channel.assertQueue(DLQ, {
+    durable: true,
+  });
+
+  await channel.bindQueue(DLQ, DLX, "#");
+
   await channel.assertQueue(QUEUE, {
     durable: true,
+    arguments: {
+      "x-dead-letter-exchange": DLX,
+    },
   });
 
   for (const routingKey of routingKeys) {
