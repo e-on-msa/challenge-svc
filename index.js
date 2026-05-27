@@ -4,7 +4,7 @@ const app = require("./app");
 const { sequelize } = require("./models");
 const { startUserEventConsumer } = require("./queues/userEventConsumer");
 
-const PORT = process.env.PORT || 8083;
+const PORT = process.env.PORT || 8084;
 
 sequelize
   .sync({ alter: false })
