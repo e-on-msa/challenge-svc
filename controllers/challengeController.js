@@ -17,6 +17,11 @@ const {
   assertCanCreateChallenge,
   assertCanJoinChallenge,
 } = require("../services/userChallengeStatusService");
+const {
+  publishChallengeCreated,
+  publishChallengeUpdated,
+  publishChallengeDeleted,
+} = require("../queues/challengeEventPublisher");
 
 /** ---------------- 공용 헬퍼: KST 기준 현재시각 & 자동 마감 ---------------- **/
 function nowKST() {
@@ -55,7 +60,8 @@ exports.create = async (req, res, next) => {
     const userId = req.user.user_id;
     const userType = req.user.type;
 
-    // 챌린지 개설 가능 여부 검증
+    // user.event 구독으로 Redis에 저장된 
+    // 사용자 상태 기반 개설 가능 여부 검증
     await assertCanCreateChallenge(userId);
 
     if (req.body.meta) {
@@ -182,6 +188,13 @@ exports.create = async (req, res, next) => {
 
       return ch;
     });
+
+    // challenge.created 이벤트 발행
+    try {
+      await publishChallengeCreated(challenge);
+    } catch (eventErr) {
+      console.error("[RabbitMQ] challenge.created publish failed:", eventErr);
+    }
 
     res.status(201).json({
       message: isMunicipality
@@ -502,15 +515,11 @@ exports.update = async (req, res, next) => {
     const challenge = await Challenge.findByPk(id);
 
     if (!challenge) {
-      return res.status(404).json({
-        error: "챌린지를 찾을 수 없습니다.",
-      });
+      return res.status(404).json({ error: "챌린지를 찾을 수 없습니다." });
     }
 
     if (challenge.user_id !== userId) {
-      return res.status(403).json({
-        error: "챌린지 수정 권한이 없습니다.",
-      });
+      return res.status(403).json({ error: "챌린지 수정 권한이 없습니다." });
     }
 
     const updatable = [
@@ -539,9 +548,7 @@ exports.update = async (req, res, next) => {
       const allowed = ["ACTIVE", "CLOSED", "CANCELLED"];
 
       if (!allowed.includes(body.challenge_state)) {
-        return res.status(400).json({
-          error: "잘못된 상태 값",
-        });
+        return res.status(400).json({ error: "잘못된 상태 값" });
       }
       challenge.challenge_state = body.challenge_state;
     }
@@ -549,11 +556,10 @@ exports.update = async (req, res, next) => {
     await sequelize.transaction(async (t) => {
       await challenge.save({ transaction: t });
 
+      // 요일 수정
       if (body.days !== undefined) {
         if (!Array.isArray(body.days)) {
-          return res.status(400).json({
-            error: "days는 배열이어야 합니다.",
-          });
+          return res.status(400).json({ error: "days는 배열이어야 합니다." });
         }
 
         await ChallengeDay.destroy({
@@ -577,6 +583,7 @@ exports.update = async (req, res, next) => {
         }
       }
 
+      // 관심사/진로희망 수정
       if (body.interestIds !== undefined) {
         await challenge.setInterests(body.interestIds, {
           transaction: t,
@@ -590,6 +597,15 @@ exports.update = async (req, res, next) => {
       }
     });
     
+    await challenge.reload();
+
+    // challenge.updated 이벤트 발행
+    try {
+      await publishChallengeUpdated(challenge);
+    } catch (eventErr) {
+      console.error("[RabbitMQ] challenge.updated publish failed:", eventErr);
+    }
+
     res.status(200).json({
       message: "챌린지가 수정되었습니다.",
       challenge_id: challenge.challenge_id,
@@ -638,6 +654,13 @@ exports.remove = async (req, res, next) => {
       });
     });
 
+    // challenge.deleted 이벤트 발행
+    try {
+      await publishChallengeDeleted(challenge);
+    } catch (eventErr) {
+      console.error("[RabbitMQ] challenge.deleted publish failed:", eventErr);
+    }
+
     res.status(204).send();
   } catch (err) {
     next(err);
@@ -677,6 +700,13 @@ exports.changeState = async (req, res, next) => {
 
     challenge.challenge_state = state;
     await challenge.save();
+
+    // challenge.updated 이벤트 발행
+    try {
+      await publishChallengeUpdated(challenge);
+    } catch (eventErr) {
+      console.error("[RabbitMQ] challenge.updated publish failed:", eventErr);
+    }
 
     res.status(200).json({
       challenge_id: challenge.challenge_id,
