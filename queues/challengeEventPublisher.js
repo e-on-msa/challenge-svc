@@ -1,7 +1,7 @@
 const amqp = require("amqplib");
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || "amqp://localhost";
-const EXCHANGE = process.env.CHALLENGE_EVENT_EXCHANGE || "challenge.event";
+const EXCHANGE = process.env.CHALLENGE_EVENT_EXCHANGE || "eon.events";
 
 let connection;
 let channel;
@@ -120,12 +120,12 @@ async function publishChallengeUpdated(challenge) {
 
 /**
  * 챌린지 상태 변경 이벤트 발행
- * (challegne.state.updated)
+ * (challenge.state.updated)
  */
-async function publishChallengeStateChanged(challenge, previousState) {
+async function publishChallengeStateUpdated(challenge, previousState) {
   const payload = await toChallengePayload(challenge);
 
-  await publishChallengeEvent("challenge.state.changed", {
+  await publishChallengeEvent("challenge.state.updated", {
     ...payload,
     previous_state: previousState,
     current_state: challenge.challenge_state,
@@ -145,7 +145,7 @@ async function publishChallengeDeleted(challenge) {
 
 /**
  * 챌린지 참여 신청 이벤트 발행
- * (challenge.paritcipation.created)
+ * (challenge.participation.created)
  */
 async function publishChallengeParticipationCreated(participation) {
   await publishChallengeEvent("challenge.participation.created", {
@@ -160,7 +160,7 @@ module.exports = {
   publishChallengeCreated,
   publishChallengeApproved,
   publishChallengeUpdated,
-  publishChallengeStateChanged,
+  publishChallengeStateUpdated,
   publishChallengeDeleted,
   publishChallengeParticipationCreated,
 };
