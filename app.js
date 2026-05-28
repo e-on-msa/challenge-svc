@@ -21,7 +21,7 @@ app.use("/api/admin/challenges", require("./routes/adminChallengeRouter"));
 app.use("/api/visions", require("./routes/visionRouter"));
 app.use("/api/interests", require("./routes/interestRouter"));
 
-app.use("/internal", "./routes/internalChallengeRouter");
+app.use("/internal", require("./routes/internalChallengeRouter"));
 
 // 에러 핸들러
 app.use((err, req, res, next) => {
