@@ -30,24 +30,61 @@ exports.getActiveWithCategories = async (req, res, next) => {
       order: [["challenge_id", "DESC"]],
     });
 
-    const result = await Promise.all(
-      challenges.map(async (challenge) => {
-        const participantCount = await ParticipatingChallenge.count({
-          where: {
-            challenge_id: challenge.challenge_id,
-            participating_state: {
-              [Op.in]: ["신청", "진행 중"],
-            },
-          },
-        });
+    if (challenges.length === 0) {
+        return res.status(200).json({ count: 0, challenges: [] });
+    }
 
-        const avgRatingRow = await Review.findOne({
-          attributes: [[fn("AVG", col("rating_stars")), "avg_rating"]],
-          where: {
-            challenge_id: challenge.challenge_id,
-          },
-          raw: true,
-        });
+    const challengeIds = challenges.map((challenge) => challenge.challenge_id);
+
+    // 참여자 수 group 집계
+    const participantRows = await ParticipatingChallenge.findAll({
+        attributes: [
+            "challenge_id",
+            [ fn("COUNT", col("challenge_id")), "participant_count" ],
+        ],
+        where: {
+            challenge_id: { [Op.in]: challengeIds },
+            participating_state: { [Op.in]: ["신청", "진행 중"] },
+        },
+        group: ["challenge_id"],
+        raw: true,
+    });
+
+    // 평균 평점 group 집계
+    const ratingRows = await Review.findAll({
+        attributes: [
+            "challenge_id",
+            [ fn("AVG", col("rating_stars")), "avg_rating" ],
+        ],
+        where: {
+            challenge_id: { [Op.in]: challengeIds },
+        },
+        group: ["challenge_id"],
+        raw: true,
+    });
+
+    // Map으로 매핑
+    const participantMap = new Map(
+        participantRows.map((row) => [
+            Number(row.challenge_id),
+            Number(row.participant_count),
+        ])
+    );
+
+    const ratingMap = new Map(
+        ratingRows.map((row) => [
+            Number(row.challenge_id),
+            Number(row.avg_rating) || 0,
+        ])
+    );
+
+    // interest_ids / vision_ids 포함 응답
+    const result = challenges.map((challenge) => {
+        const participantCount =
+            participantMap.get(challenge.challenge_id) || 0;
+
+        const avgRating =
+            ratingMap.get(challenge.challenge_id) || 0;
 
         return {
           challenge_id: challenge.challenge_id,
@@ -58,7 +95,7 @@ exports.getActiveWithCategories = async (req, res, next) => {
           maximum_age: challenge.maximum_age,
 
           participant_count: participantCount,
-          avg_rating: Number(avgRatingRow?.avg_rating) || 0,
+          avg_rating: avgRating,
 
           interest_ids:
             challenge.interests?.map((interest) => interest.interest_id) || [],
@@ -72,8 +109,7 @@ exports.getActiveWithCategories = async (req, res, next) => {
           start_date: challenge.start_date,
           end_date: challenge.end_date,
         };
-      })
-    );
+    });
 
     return res.status(200).json({
       count: result.length,
