@@ -124,12 +124,18 @@ exports.approve = async (req, res, next) => {
 
     const challenge = await Challenge.findByPk(id);
 
+    if (!challenge) {
+      return res.status(404).json({ error: "승인된 챌린지를 다시 조회할 수 없습니다." });
+    }
+
     // challenge.approved 이벤트 발행
     try {
       await publishChallengeApproved(challenge);
     } catch (eventErr) {
-      console.error("[RabbitMQ] challenge.approved publish failed:", eventErr);
-    }
+        console.error("[RabbitMQ] challenge.approved publish failed:",
+          { challenge_id: id, error: eventErr.message}
+        );
+    };
 
     res.sendStatus(204);
   } catch (err) {
