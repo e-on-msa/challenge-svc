@@ -612,28 +612,29 @@ exports.update = async (req, res, next) => {
     
     await challenge.reload();
 
-    try {
-      const stateChanged =
-        body.challenge_state !== undefined &&
-        previousState !== challenge.challenge_state;
+    const stateChanged =
+      body.challenge_state !== undefined &&
+      previousState !== challenge.challenge_state;
 
-      const contentUpdated =
-        hasGeneralUpdate || hasRelationUpdate;
+    const contentUpdated =
+      hasGeneralUpdate || hasRelationUpdate;
 
-      if (contentUpdated) {
+    if (contentUpdated) {
+      try {
         // challenge.updated 이벤트 발행
         await publishChallengeUpdated(challenge);
+      } catch (eventErr) {
+        console.error("[RabbitMQ] challenge.updated publish failed:", eventErr);
       }
+    }
 
-      if (stateChanged) {
+    if (stateChanged) {
+      try {
         // challenge.state.changed 이벤트 발행
-        await publishChallengeStateChanged(
-          challenge,
-          previousState
-        );
+        await publishChallengeStateChanged(challenge, previousState);
+      } catch (eventErr) {
+        console.error("[RabbitMQ] challenge.state.changed publish failed:", eventErr);
       }
-    } catch (eventErr) {
-      console.error("[RabbitMQ] challenge event publish failed:", eventErr);
     }
 
     res.status(200).json({
@@ -728,6 +729,8 @@ exports.changeState = async (req, res, next) => {
       });
     }
 
+    const previousState = challenge.challenge_state;
+
     challenge.challenge_state = state;
     await challenge.save();
 
@@ -735,7 +738,7 @@ exports.changeState = async (req, res, next) => {
     try {
       await publishChallengeStateChanged(challenge, previousState);
     } catch (eventErr) {
-      console.error("[RabbitMQ] challenge.updated publish failed:", eventErr);
+      console.error("[RabbitMQ] challenge.state.changed publish failed:", eventErr);
     }
 
     res.status(200).json({

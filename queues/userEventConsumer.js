@@ -13,9 +13,10 @@
 const amqp = require("amqplib");
 
 const {
-  saveUserDeactivated,
   saveUserSuspended,
   saveUserUnsuspended,
+  saveUserJoinRestricted,
+  saveUserJoinUnrestricted,
 } = require("../services/userChallengeStatusService");
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || "amqp://localhost";
@@ -31,9 +32,10 @@ const DLQ = `${QUEUE}.dlq`;
 
 // challenge-svc가 구독하는 사용자 이벤트 목록
 const routingKeys = [
-  "user.deactivated",
   "user.suspended",
   "user.unsuspended",
+  "user.join-restricted",
+  "user.join-unrestricted",
 ];
 
 /**
@@ -46,16 +48,20 @@ async function handleUserEvent(routingKey, payload) {
   }
 
   switch (routingKey) {
-    case "user.deactivated":
-      await saveUserDeactivated(payload);
-      break;
-
     case "user.suspended":
       await saveUserSuspended(payload);
       break;
 
     case "user.unsuspended":
       await saveUserUnsuspended(payload);
+      break;
+
+    case "user.join-restricted":
+      await saveUserJoinRestricted(payload);
+      break;
+
+    case "user.join-unrestricted":
+      await saveUserJoinUnrestricted(payload);
       break;
 
     default:
