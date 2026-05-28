@@ -94,10 +94,16 @@ async function toChallengePayload(challenge) {
 async function publishChallengeCreated(challenge) {
   const payload = await toChallengePayload(challenge);
 
-  await publishChallengeEvent(
-    "challenge.created",
-    payload
-  );
+  await publishChallengeEvent("challenge.created", payload);
+}
+
+/**
+ * 챌린지 승인 이벤트 발행
+ */
+async function publishChallengeApproved(challenge) {
+  const payload = await toChallengePayload(challenge);
+
+  await publishChallengeEvent("challenge.approved", payload);
 }
 
 /**
@@ -106,10 +112,20 @@ async function publishChallengeCreated(challenge) {
 async function publishChallengeUpdated(challenge) {
   const payload = await toChallengePayload(challenge);
 
-  await publishChallengeEvent(
-    "challenge.updated",
-    payload
-  );
+  await publishChallengeEvent("challenge.updated", payload);
+}
+
+/**
+ * 챌린지 상태 변경 이벤트 발행
+ */
+async function publishChallengeStateChanged(challenge, previousState) {
+  const payload = await toChallengePayload(challenge);
+
+  await publishChallengeEvent("challenge.state.changed", {
+    ...payload,
+    previous_state: previousState,
+    current_state: challenge.challenge_state,
+  });
 }
 
 /**
@@ -136,7 +152,9 @@ async function publishChallengeParticipationCreated(participation) {
 
 module.exports = {
   publishChallengeCreated,
+  publishChallengeApproved,
   publishChallengeUpdated,
+  publishChallengeStateChanged,
   publishChallengeDeleted,
   publishChallengeParticipationCreated,
 };

@@ -20,6 +20,7 @@ const {
 const {
   publishChallengeCreated,
   publishChallengeUpdated,
+  publishChallengeStateChanged,
   publishChallengeDeleted,
 } = require("../queues/challengeEventPublisher");
 
@@ -522,6 +523,8 @@ exports.update = async (req, res, next) => {
       return res.status(403).json({ error: "챌린지 수정 권한이 없습니다." });
     }
 
+    const previousState = challenge.challenge_state;
+
     const updatable = [
       "title",
       "description",
@@ -536,6 +539,15 @@ exports.update = async (req, res, next) => {
       "intermediate_participation",
       "creator_contact",
     ];
+
+    const hasGeneralUpdate = updatable.some(
+      (field) => body[field] !== undefined
+    );
+
+    const hasRelationUpdate =
+      body.days !== undefined ||
+      body.interestIds !== undefined ||
+      body.visionIds !== undefined;
 
     updatable.forEach((field) => {
       if (body[field] !== undefined) {
@@ -600,11 +612,28 @@ exports.update = async (req, res, next) => {
     
     await challenge.reload();
 
-    // challenge.updated 이벤트 발행
     try {
-      await publishChallengeUpdated(challenge);
+      const stateChanged =
+        body.challenge_state !== undefined &&
+        previousState !== challenge.challenge_state;
+
+      const contentUpdated =
+        hasGeneralUpdate || hasRelationUpdate;
+
+      if (contentUpdated) {
+        // challenge.updated 이벤트 발행
+        await publishChallengeUpdated(challenge);
+      }
+
+      if (stateChanged) {
+        // challenge.state.changed 이벤트 발행
+        await publishChallengeStateChanged(
+          challenge,
+          previousState
+        );
+      }
     } catch (eventErr) {
-      console.error("[RabbitMQ] challenge.updated publish failed:", eventErr);
+      console.error("[RabbitMQ] challenge event publish failed:", eventErr);
     }
 
     res.status(200).json({
@@ -702,9 +731,9 @@ exports.changeState = async (req, res, next) => {
     challenge.challenge_state = state;
     await challenge.save();
 
-    // challenge.updated 이벤트 발행
+    // challenge.state.changed 이벤트 발행
     try {
-      await publishChallengeUpdated(challenge);
+      await publishChallengeStateChanged(challenge, previousState);
     } catch (eventErr) {
       console.error("[RabbitMQ] challenge.updated publish failed:", eventErr);
     }
