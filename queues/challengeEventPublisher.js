@@ -92,9 +92,11 @@ async function toChallengePayload(challenge) {
  * 챌린지 생성 이벤트 발행
  */
 async function publishChallengeCreated(challenge) {
+  const payload = await toChallengePayload(challenge);
+
   await publishChallengeEvent(
     "challenge.created",
-    toChallengePayload(challenge)
+    payload
   );
 }
 
@@ -102,9 +104,11 @@ async function publishChallengeCreated(challenge) {
  * 챌린지 수정 이벤트 발행
  */
 async function publishChallengeUpdated(challenge) {
+  const payload = await toChallengePayload(challenge);
+
   await publishChallengeEvent(
     "challenge.updated",
-    toChallengePayload(challenge)
+    payload
   );
 }
 
