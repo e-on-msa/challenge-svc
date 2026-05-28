@@ -6,6 +6,9 @@ const {
   Interests,
   Visions,
 } = require("../models");
+const {
+  publishChallengeApproved,
+} = require("../queues/challengeEventPublisher");
 
 /**
  * [GET] /api/admin/challenges
@@ -117,6 +120,15 @@ exports.approve = async (req, res, next) => {
       return exists
         ? res.status(409).json({ error: "승인 대기 상태의 챌린지만 승인할 수 있습니다." })
         : res.status(404).json({ error: "챌린지를 찾을 수 없습니다." });
+    }
+
+    const challenge = await Challenge.findByPk(id);
+
+    // challenge.approved 이벤트 발행
+    try {
+      await publishChallengeApproved(challenge);
+    } catch (eventErr) {
+      console.error("[RabbitMQ] challenge.approved publish failed:", eventErr);
     }
 
     res.sendStatus(204);
