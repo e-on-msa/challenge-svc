@@ -553,15 +553,16 @@ exports.update = async (req, res, next) => {
       challenge.challenge_state = body.challenge_state;
     }
 
+    // days 선검증
+    if (body.days !== undefined && !Array.isArray(body.days)) {
+      return res.status(400).json({ error: "days는 배열이어야 합니다." });
+    }
+
     await sequelize.transaction(async (t) => {
       await challenge.save({ transaction: t });
 
       // 요일 수정
       if (body.days !== undefined) {
-        if (!Array.isArray(body.days)) {
-          return res.status(400).json({ error: "days는 배열이어야 합니다." });
-        }
-
         await ChallengeDay.destroy({
           where: { challenge_id: id },
           transaction: t,
