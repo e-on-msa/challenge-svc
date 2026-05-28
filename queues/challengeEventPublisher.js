@@ -90,6 +90,7 @@ async function toChallengePayload(challenge) {
 
 /**
  * 챌린지 생성 이벤트 발행
+ * (challenge.created)
  */
 async function publishChallengeCreated(challenge) {
   const payload = await toChallengePayload(challenge);
@@ -99,6 +100,7 @@ async function publishChallengeCreated(challenge) {
 
 /**
  * 챌린지 승인 이벤트 발행
+ * (challenge.approved)
  */
 async function publishChallengeApproved(challenge) {
   const payload = await toChallengePayload(challenge);
@@ -108,6 +110,7 @@ async function publishChallengeApproved(challenge) {
 
 /**
  * 챌린지 수정 이벤트 발행
+ * (challenge.updated)
  */
 async function publishChallengeUpdated(challenge) {
   const payload = await toChallengePayload(challenge);
@@ -117,6 +120,7 @@ async function publishChallengeUpdated(challenge) {
 
 /**
  * 챌린지 상태 변경 이벤트 발행
+ * (challegne.state.updated)
  */
 async function publishChallengeStateChanged(challenge, previousState) {
   const payload = await toChallengePayload(challenge);
@@ -130,6 +134,7 @@ async function publishChallengeStateChanged(challenge, previousState) {
 
 /**
  * 챌린지 삭제 이벤트 발행
+ * (challenge.deleted)
  */
 async function publishChallengeDeleted(challenge) {
   await publishChallengeEvent("challenge.deleted", {
@@ -140,6 +145,7 @@ async function publishChallengeDeleted(challenge) {
 
 /**
  * 챌린지 참여 신청 이벤트 발행
+ * (challenge.paritcipation.created)
  */
 async function publishChallengeParticipationCreated(participation) {
   await publishChallengeEvent("challenge.participation.created", {
