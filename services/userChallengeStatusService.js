@@ -17,19 +17,6 @@ const redis = require("../config/redis");
 const getKey = (userId) => `user:${userId}:challenge_status`;
 
 /**
- * user.deactivated 이벤트 처리
- * → 챌린지 참여 제한 상태 저장
- */
-async function saveUserDeactivated({ user_id, deactivated_at }) {
-  const key = getKey(user_id);
-
-  await redis.hset(key, {
-    is_deactivated: "true",
-    deactivated_at: deactivated_at ?? "",
-  });
-}
-
-/**
  * user.suspended 이벤트 처리
  * → 챌린지 개설 제한 상태 저장
  */
@@ -56,6 +43,32 @@ async function saveUserUnsuspended({ user_id }) {
 }
 
 /**
+ * user.join-restricted 이벤트 처리
+ * → 챌린지 참여 제한 상태 저장
+ */
+async function saveUserJoinRestricted({ user_id, banned_until }) {
+  const key = getKey(user_id);
+
+  await redis.hset(key, {
+    is_challenge_join_restricted: "true",
+    join_banned_until: banned_until ?? "",
+  });
+}
+
+/**
+ * user.join-unrestricted 이벤트 처리
+ * → 챌린지 참여 제한 해제
+ */
+async function saveUserJoinUnrestricted({ user_id }) {
+  const key = getKey(user_id);
+
+  await redis.hset(key, {
+    is_challenge_join_restricted: "false",
+    join_banned_until: "",
+  });
+}
+
+/**
  * Redis에 저장된 사용자 상태 조회
  */
 async function getUserChallengeStatus(userId) {
@@ -64,33 +77,21 @@ async function getUserChallengeStatus(userId) {
   // 상태 정보 없으면 기본값 반환
   if (!status || Object.keys(status).length === 0) {
     return {
-      isDeactivated: false,
       isChallengeCreateRestricted: false,
+      isChallengeJoinRestricted: false,
       bannedUntil: null,
+      joinBannedUntil: null,
     };
   }
 
   return {
-    isDeactivated: status.is_deactivated === "true",
     isChallengeCreateRestricted:
       status.is_challenge_create_restricted === "true",
+    isChallengeJoinRestricted:
+      status.is_challenge_join_restricted === "true",
     bannedUntil: status.banned_until || null,
-    deactivatedAt: status.deactivated_at || null,
+    joinBannedUntil: status.join_banned_until || null,
   };
-}
-
-/**
- * 챌린지 참여 가능 여부 검증
- * (user.deactivated 상태 확인)
- */
-async function assertCanJoinChallenge(userId) {
-  const status = await getUserChallengeStatus(userId);
-
-  if (status.isDeactivated) {
-    const error = new Error("탈퇴한 사용자는 챌린지에 참여할 수 없습니다.");
-    error.statusCode = 403;
-    throw error;
-  }
 }
 
 /**
@@ -107,11 +108,26 @@ async function assertCanCreateChallenge(userId) {
   }
 }
 
+/**
+ * 챌린지 참여 가능 여부 검증
+ * (user.join-restricted 상태 확인)
+ */
+async function assertCanJoinChallenge(userId) {
+  const status = await getUserChallengeStatus(userId);
+
+  if (status.isChallengeJoinRestricted) {
+    const error = new Error("참여가 제한된 사용자는 챌린지에 참여할 수 없습니다.");
+    error.statusCode = 403;
+    throw error;
+  }
+}
+
 module.exports = {
-  saveUserDeactivated,
   saveUserSuspended,
   saveUserUnsuspended,
+  saveUserJoinRestricted,
+  saveUserJoinUnrestricted,
   getUserChallengeStatus,
-  assertCanJoinChallenge,
   assertCanCreateChallenge,
+  assertCanJoinChallenge,
 };
