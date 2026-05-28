@@ -612,30 +612,34 @@ exports.update = async (req, res, next) => {
     
     await challenge.reload();
 
-    try {
-      const stateChanged =
-        body.challenge_state !== undefined &&
-        previousState !== challenge.challenge_state;
+    const stateChanged =
+      body.challenge_state !== undefined &&
+      previousState !== challenge.challenge_state;
 
-      const contentUpdated =
-        hasGeneralUpdate || hasRelationUpdate;
+    const contentUpdated =
+      hasGeneralUpdate || hasRelationUpdate;
 
-      if (contentUpdated) {
+    if (contentUpdated) {
+      try {
         // challenge.updated 이벤트 발행
         await publishChallengeUpdated(challenge);
+      } catch (eventErr) {
+        console.error("[RabbitMQ] challenge.updated publish failed:", eventErr);
       }
+    }
 
-      if (stateChanged) {
+    if (stateChanged) {
+      try {
         // challenge.state.changed 이벤트 발행
         await publishChallengeStateChanged(
           challenge,
           previousState
         );
+      } catch (eventErr) {
+        console.error("[RabbitMQ] challenge.state.changed publish failed:", eventErr);
       }
-    } catch (eventErr) {
-      console.error("[RabbitMQ] challenge event publish failed:", eventErr);
     }
-
+    
     res.status(200).json({
       message: "챌린지가 수정되었습니다.",
       challenge_id: challenge.challenge_id,
