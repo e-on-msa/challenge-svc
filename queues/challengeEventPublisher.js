@@ -122,10 +122,10 @@ async function publishChallengeUpdated(challenge) {
  * 챌린지 상태 변경 이벤트 발행
  * (challenge.state.updated)
  */
-async function publishChallengeStateChanged(challenge, previousState) {
+async function publishChallengeStateUpdated(challenge, previousState) {
   const payload = await toChallengePayload(challenge);
 
-  await publishChallengeEvent("challenge.state.changed", {
+  await publishChallengeEvent("challenge.state.updated", {
     ...payload,
     previous_state: previousState,
     current_state: challenge.challenge_state,
@@ -160,7 +160,7 @@ module.exports = {
   publishChallengeCreated,
   publishChallengeApproved,
   publishChallengeUpdated,
-  publishChallengeStateChanged,
+  publishChallengeStateUpdated,
   publishChallengeDeleted,
   publishChallengeParticipationCreated,
 };
