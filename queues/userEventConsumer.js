@@ -4,6 +4,8 @@ const {
   saveUserDeactivated,
   saveUserSuspended,
   saveUserUnsuspended,
+  saveUserJoinRestricted,
+  saveUserJoinUnrestricted,
 } = require("../services/userChallengeStatusService");
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || "amqp://localhost";
@@ -17,6 +19,8 @@ const routingKeys = [
   "user.deactivated",
   "user.suspended",
   "user.unsuspended",
+  "user.join-restricted",
+  "user.join-unrestricted",
 ];
 
 async function handleUserEvent(routingKey, payload) {
@@ -35,6 +39,14 @@ async function handleUserEvent(routingKey, payload) {
 
     case "user.unsuspended":
       await saveUserUnsuspended(payload);
+      break;
+
+    case "user.join-restricted":
+      await saveUserJoinRestricted(payload);
+      break;
+
+    case "user.join-unrestricted":
+      await saveUserJoinUnrestricted(payload);
       break;
 
     default:
