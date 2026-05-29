@@ -479,6 +479,7 @@ exports.detail = async (req, res, next) => {
     res.status(200).json({
       challenge_id: challenge.challenge_id,
       title: challenge.title,
+      is_owner: userId === challenge.user_id,
       description: challenge.description,
       age_range: `${challenge.minimum_age} ~ ${challenge.maximum_age}`,
       maximum_people: challenge.maximum_people,
