@@ -5,8 +5,8 @@ const internalChallengeCtrl = require("../controllers/internalChallengeControlle
 
 // 추천 서비스용 사용자 챌린지 활동 조회
 router.get(
-  "/internal/participations/user/:userId",
-  internalController.getUserChallengeActivity
+  "/participations/user/:userId",
+  internalChallengeCtrl.getUserChallengeActivity
 );
 
 // 추천 서비스용 활성 챌린지 내부 조회
