@@ -23,7 +23,7 @@ const getKey = (userId) => `user:${userId}:challenge_status`;
 async function saveUserSuspended({ user_id, banned_until }) {
   const key = getKey(user_id);
 
-  await redis.hset(key, {
+  await redis.hSet(key, {
     is_challenge_create_restricted: "true",
     banned_until: banned_until ?? "",
   });
@@ -36,7 +36,7 @@ async function saveUserSuspended({ user_id, banned_until }) {
 async function saveUserUnsuspended({ user_id }) {
   const key = getKey(user_id);
 
-  await redis.hset(key, {
+  await redis.hSet(key, {
     is_challenge_create_restricted: "false",
     banned_until: "",
   });
@@ -49,7 +49,7 @@ async function saveUserUnsuspended({ user_id }) {
 async function saveUserJoinRestricted({ user_id, banned_until }) {
   const key = getKey(user_id);
 
-  await redis.hset(key, {
+  await redis.hSet(key, {
     is_challenge_join_restricted: "true",
     join_banned_until: banned_until ?? "",
   });
@@ -62,7 +62,7 @@ async function saveUserJoinRestricted({ user_id, banned_until }) {
 async function saveUserJoinUnrestricted({ user_id }) {
   const key = getKey(user_id);
 
-  await redis.hset(key, {
+  await redis.hSet(key, {
     is_challenge_join_restricted: "false",
     join_banned_until: "",
   });
@@ -72,7 +72,7 @@ async function saveUserJoinUnrestricted({ user_id }) {
  * Redis에 저장된 사용자 상태 조회
  */
 async function getUserChallengeStatus(userId) {
-  const status = await redis.hgetall(getKey(userId));
+  const status = await redis.hGetAll(getKey(userId));
 
   // 상태 정보 없으면 기본값 반환
   if (!status || Object.keys(status).length === 0) {

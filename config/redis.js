@@ -1,4 +1,4 @@
-const Redis = require("ioredis");
+const { createClient } = require("redis");
 
 const redisPort = parseInt(process.env.REDIS_PORT ?? "6379", 10);
 
@@ -12,9 +12,17 @@ if (
   );
 }
 
-const redis = new Redis({
-  host: process.env.REDIS_HOST || "localhost",
-  port: redisPort,
+const redis = createClient({
+  socket: {
+    host: process.env.REDIS_HOSTNAME || "redis",
+    port: redisPort,
+  },
 });
+
+redis.on("error", (err) => {
+  console.error("Redis Client Error:", err);
+});
+
+redis.connect().catch(console.error);
 
 module.exports = redis;
