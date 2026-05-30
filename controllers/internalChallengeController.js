@@ -9,6 +9,59 @@ const {
 } = require("../models");
 
 /**
+ * [GET] /internal/participations/user/:userId
+ * 추천 서비스용 사용자 챌린지 활동 조회
+ */
+exports.getUserChallengeActivity = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    const participatedRows = await ParticipatingChallenge.findAll({
+      where: {
+        user_id: userId,
+      },
+      include: [
+        {
+          model: Challenge,
+          as: "challenge",
+          attributes: ["challenge_id", "title", "description"],
+        },
+      ],
+      order: [["created_at", "DESC"]],
+    });
+
+    const createdRows = await Challenge.findAll({
+      where: {
+        user_id: userId,
+      },
+      attributes: ["challenge_id", "title", "description", "challenge_state"],
+      order: [["challenge_id", "DESC"]],
+    });
+
+    const participated = participatedRows.map((row) => ({
+      challenge_id: row.challenge?.challenge_id,
+      title: row.challenge?.title,
+      description: row.challenge?.description,
+      participating_state: row.participating_state,
+    }));
+
+    const created = createdRows.map((challenge) => ({
+      challenge_id: challenge.challenge_id,
+      title: challenge.title,
+      description: challenge.description,
+      challenge_state: challenge.challenge_state,
+    }));
+
+    return res.status(200).json({
+      participated,
+      created,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
  * [GET] /internal/challenges/active-with-categories
  * 추천 서비스용 활성 챌린지 내부 조회
  */
