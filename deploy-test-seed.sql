@@ -1,13 +1,13 @@
 -- =================================================================
 -- challenge-svc 배포 환경 테스트 데이터 (user-svc 연동 검증용)
--- 실행 전 확인: user-svc에 user_id 1, 2, 4 이 반드시 존재해야 합니다.
+-- 실행 전 확인: user-svc에 user_id 1(student), 3(student), 4(admin) 이 반드시 존재해야 합니다.
 --
 -- 테스트 시나리오:
 --   챌린지 상세 조회        → challenge_id = 101 (APPROVED, user_id=1 개설)
---   리뷰 목록 조회          → challenge_id = 101 (user_id 2, 4 작성)
---   챌린지별 출석 목록 조회 → challenge_id = 101 (user_id 2, 4 참여·출석 기록)
---   관리자용 챌린지 상세    → challenge_id = 103 (PENDING, user_id=4 개설)
---   챌린지 참여 테스트      → challenge_id = 102 (APPROVED, 신청 가능)
+--   리뷰 목록 조회          → challenge_id = 101 (user_id 3 작성)
+--   챌린지별 출석 목록 조회 → challenge_id = 101 (user_id 3 참여·출석 기록)
+--   관리자용 챌린지 상세    → challenge_id = 103 (PENDING, user_id=1 개설)
+--   챌린지 참여 테스트      → challenge_id = 102 (APPROVED, user_id=1로 신청)
 --   챌린지 개설 테스트      → POST 요청만 필요 (아래 기준 데이터 필요)
 -- =================================================================
 
@@ -191,9 +191,8 @@ ON DUPLICATE KEY UPDATE `vision_detail` = VALUES(`vision_detail`), `category_cod
 
 -- =================================================================
 -- 5. 테스트 챌린지
---    user_id 1 = 챌린지 101 개설자  (user-svc에 존재 필요)
---    user_id 2 = 챌린지 102 개설자  (user-svc에 존재 필요)
---    user_id 4 = 챌린지 103 개설자  (user-svc에 존재 필요)
+--    user_id 1 = 챌린지 101, 103 개설자  (student)
+--    user_id 3 = 챌린지 102 개설자       (student)
 -- =================================================================
 INSERT INTO `challenges` (
   `challenge_id`, `challenge_title`, `challenge_description`,
@@ -228,7 +227,7 @@ INSERT INTO `challenges` (
    '2026-06-15 09:00:00',
    '2026-07-31 23:59:59',
    TRUE, 'DAILY', TRUE,
-   'ACTIVE', 'APPROVED', 2,
+   'ACTIVE', 'APPROVED', 3,
    NOW(), NOW()),
 
   -- 103: 승인 대기 중인 PENDING 챌린지
@@ -242,7 +241,7 @@ INSERT INTO `challenges` (
    '2026-06-20 00:00:00',
    '2026-07-19 23:59:59',
    FALSE, NULL, TRUE,
-   'ACTIVE', 'PENDING', 4,
+   'ACTIVE', 'PENDING', 1,
    NOW(), NOW())
 ON DUPLICATE KEY UPDATE
   `challenge_title`         = VALUES(`challenge_title`),
@@ -316,14 +315,11 @@ INSERT IGNORE INTO `challenge_visions` (`challenge_id`, `vision_id`) VALUES
 
 -- =================================================================
 -- 10. 참여 데이터 (participating_challenges)
---     출석 목록 조회: challenge_id=101, 참여 상태가 '신청' 또는 '진행 중'인 행만 조회
+--     출석 목록 조회: challenge_id=101, user_id=3(student) 참여·출석 기록
 -- =================================================================
 INSERT INTO `participating_challenges` (`participating_state`, `challenge_id`, `user_id`) VALUES
   -- challenge 101 참여자
-  ('진행 중', 101, 2),   -- user 2: 출석 기록 있음
-  ('진행 중', 101, 4),   -- user 4: 출석 기록 있음 (결석 포함)
-  -- challenge 102 참여자 (신청 단계)
-  ('신청',    102, 4)    -- user 4: 아직 시작 전
+  ('진행 중', 101, 3)    -- user 3 (student): 출석 기록 있음 (결석 포함)
 ON DUPLICATE KEY UPDATE `participating_state` = VALUES(`participating_state`);
 
 -- =================================================================
@@ -333,45 +329,29 @@ ON DUPLICATE KEY UPDATE `participating_state` = VALUES(`participating_state`);
 INSERT INTO `participating_attendances` (`attendance_date`, `attendance_state`, `memo`, `participating_id`)
 SELECT '2026-05-17', '출석', '첫 주 토요일 참여', pc.`participating_id`
 FROM `participating_challenges` pc
-WHERE pc.`challenge_id` = 101 AND pc.`user_id` = 2;
-
-INSERT INTO `participating_attendances` (`attendance_date`, `attendance_state`, `memo`, `participating_id`)
-SELECT '2026-05-18', '출석', NULL, pc.`participating_id`
-FROM `participating_challenges` pc
-WHERE pc.`challenge_id` = 101 AND pc.`user_id` = 2;
-
-INSERT INTO `participating_attendances` (`attendance_date`, `attendance_state`, `memo`, `participating_id`)
-SELECT '2026-05-24', '출석', NULL, pc.`participating_id`
-FROM `participating_challenges` pc
-WHERE pc.`challenge_id` = 101 AND pc.`user_id` = 2;
-
-INSERT INTO `participating_attendances` (`attendance_date`, `attendance_state`, `memo`, `participating_id`)
-SELECT '2026-05-17', '출석', NULL, pc.`participating_id`
-FROM `participating_challenges` pc
-WHERE pc.`challenge_id` = 101 AND pc.`user_id` = 4;
+WHERE pc.`challenge_id` = 101 AND pc.`user_id` = 3;
 
 INSERT INTO `participating_attendances` (`attendance_date`, `attendance_state`, `memo`, `participating_id`)
 SELECT '2026-05-18', '결석', '개인 사정', pc.`participating_id`
 FROM `participating_challenges` pc
-WHERE pc.`challenge_id` = 101 AND pc.`user_id` = 4;
+WHERE pc.`challenge_id` = 101 AND pc.`user_id` = 3;
 
 INSERT INTO `participating_attendances` (`attendance_date`, `attendance_state`, `memo`, `participating_id`)
 SELECT '2026-05-24', '출석', NULL, pc.`participating_id`
 FROM `participating_challenges` pc
-WHERE pc.`challenge_id` = 101 AND pc.`user_id` = 4;
+WHERE pc.`challenge_id` = 101 AND pc.`user_id` = 3;
 
 INSERT INTO `participating_attendances` (`attendance_date`, `attendance_state`, `memo`, `participating_id`)
 SELECT '2026-05-25', '출석', NULL, pc.`participating_id`
 FROM `participating_challenges` pc
-WHERE pc.`challenge_id` = 101 AND pc.`user_id` = 4;
+WHERE pc.`challenge_id` = 101 AND pc.`user_id` = 3;
 
 -- =================================================================
 -- 12. 리뷰 (reviews) — challenge 101
---     user_id 2, 4 이 user-svc에 존재해야 writer.name 이 채워집니다.
+--     user_id 3 이 user-svc에 존재해야 writer.name 이 채워집니다.
 -- =================================================================
 INSERT INTO `reviews` (`rating_stars`, `text`, `is_edited`, `review_date`, `challenge_id`, `user_id`) VALUES
-  (5, '알고리즘 실력이 눈에 띄게 늘었어요! 스터디 분위기도 너무 좋았습니다.', FALSE, '2026-05-29 21:00:00', 101, 2),
-  (4, '코드 리뷰가 특히 도움이 됐어요. 다음 기수도 참여하고 싶습니다.',        FALSE, '2026-05-29 22:30:00', 101, 4)
+  (4, '코드 리뷰가 특히 도움이 됐어요. 다음 기수도 참여하고 싶습니다.', FALSE, '2026-05-29 22:30:00', 101, 3)
 ON DUPLICATE KEY UPDATE
   `rating_stars` = VALUES(`rating_stars`),
   `text`         = VALUES(`text`),
@@ -382,10 +362,8 @@ ON DUPLICATE KEY UPDATE
 -- 13. 북마크 (bookmarks)
 -- =================================================================
 INSERT IGNORE INTO `bookmarks` (`challenge_id`, `user_id`) VALUES
-  (101, 2),
-  (101, 4),
-  (102, 1),
-  (102, 4);
+  (101, 3),   -- user 3이 challenge 101 북마크
+  (102, 1);   -- user 1이 challenge 102 북마크 (참여 테스트 전 관심 표시)
 
 -- =================================================================
 -- 확인 쿼리 (실행 후 결과 검증)
