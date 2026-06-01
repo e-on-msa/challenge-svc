@@ -17,7 +17,7 @@ exports.join = async (req, res, next) => {
       return res.status(400).json({ error: "challenge_id는 필수입니다." });
     }
 
-    // user.event 구독으로 Redis에 저장된 
+    // user.events 구독으로 Redis에 저장된 
     // 사용자 상태 기반 참여 가능 여부 검증
     await assertCanJoinChallenge(userId);
 

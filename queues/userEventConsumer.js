@@ -2,7 +2,7 @@
  * RabbitMQ user 이벤트 수신 및 라우팅 담당
  *
  * 역할
- * - user.event exchange 구독
+ * - user.events exchange 구독
  * - routing key 기반 이벤트 분기
  * - 사용자 상태 변경 정보를 Service로 전달
  *
@@ -22,7 +22,7 @@ const {
 const RABBITMQ_URL = process.env.RABBITMQ_URL || "amqp://localhost";
 
 // user-svc가 발행하는 사용자 이벤트 exchange
-const EXCHANGE = process.env.USER_EVENT_EXCHANGE || "user.event";
+const EXCHANGE = process.env.USER_EVENT_EXCHANGE || "user.events";
 
 // challenge-svc 사용자 상태 반영용 큐
 const QUEUE = process.env.USER_EVENT_QUEUE || "challenge-svc.user-event.queue";
@@ -70,7 +70,7 @@ async function handleUserEvent(routingKey, payload) {
 }
 
 /**
- * user.event consumer 시작
+ * user.events consumer 시작
  */
 async function startUserEventConsumer() {
   const connection = await amqp.connect(RABBITMQ_URL);

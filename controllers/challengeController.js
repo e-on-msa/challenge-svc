@@ -61,7 +61,7 @@ exports.create = async (req, res, next) => {
     const userId = req.user.user_id;
     const userType = req.user.type;
 
-    // user.event 구독으로 Redis에 저장된 
+    // user.events 구독으로 Redis에 저장된 
     // 사용자 상태 기반 개설 가능 여부 검증
     await assertCanCreateChallenge(userId);
 
