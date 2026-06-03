@@ -14,7 +14,7 @@ const {
  */
 exports.getUserChallengeActivity = async (req, res, next) => {
   try {
-    const { userId } = req.params;
+    const userId = Number(req.params.userId);
 
     if (!Number.isInteger(userId) || userId <= 0) {
       return res.status(400).json({ error: "유효하지 않은 사용자 ID입니다." });
