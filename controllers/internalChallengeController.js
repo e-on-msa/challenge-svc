@@ -31,7 +31,7 @@ exports.getUserChallengeActivity = async (req, res, next) => {
           attributes: ["challenge_id", "title", "description"],
         },
       ],
-      order: [["created_at", "DESC"]],
+      order: [["participating_id", "DESC"]],
     });
 
     const createdRows = await Challenge.findAll({
