@@ -43,9 +43,9 @@ exports.getUserChallengeActivity = async (req, res, next) => {
     });
 
     const participated = participatedRows.map((row) => ({
-      challenge_id: row.challenge?.challenge_id,
-      title: row.challenge?.title,
-      description: row.challenge?.description,
+      challenge_id: row.Challenge?.challenge_id,
+      title: row.Challenge?.title,
+      description: row.Challenge?.description,
       participating_state: row.participating_state,
     }));
 
