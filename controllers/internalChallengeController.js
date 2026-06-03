@@ -27,7 +27,7 @@ exports.getUserChallengeActivity = async (req, res, next) => {
       include: [
         {
           model: Challenge,
-          as: "challenge",
+          as: "Challenge",
           attributes: ["challenge_id", "title", "description"],
         },
       ],
