@@ -1,4 +1,4 @@
-const { Visions } = require("../models");
+const { VisionCategory, Visions } = require("../models");
 
 /**
  * [GET] /api/visions
