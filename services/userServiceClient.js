@@ -15,7 +15,7 @@ exports.getUsersByIds = async (userIds) => {
   });
 
   const users = Array.isArray(response.data) ? response.data : [];
-  return response.data.reduce((map, user) => {
+  return users.reduce((map, user) => {
     map[user.user_id] = user;
     return map;
   }, {});
