@@ -12,16 +12,16 @@ if (!isGcsStorage && !fs.existsSync("uploads")) {
 const storage = isGcsStorage
     // gcs → 메모리에 저장
     ? multer.memoryStorage()
-    // local → 로컬 uploads 저장
+    // local → uploads 디렉터리(PVC 마운트 경로)에 저장
     : multer.diskStorage({
         destination: (_req, _file, cb) => {
           cb(null, "uploads/"); // uploads 폴더에 저장
         },
         filename: (_req, file, cb) => {
             const ext      = path.extname(file.originalname); // .jpg
-            const basename = path.basename(file.originalname, ext);
             const unique   = Date.now() + "-" + Math.round(Math.random() * 1e9);
-            cb(null, `${basename}-${unique}${ext}`); // img-12345.jpg
+
+            cb(null, `attachment-${unique}${ext}`); // img-12345.jpg
         },
       });
 
