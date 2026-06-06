@@ -441,15 +441,17 @@ exports.detail = async (req, res, next) => {
       return res.status(404).json({ error: "존재하지 않는 챌린지입니다." });
     }
 
+    const creatorUserId = Number(challenge.user_id);
+
     let creator = {
-      user_id: challenge.user_id,
+      user_id: creatorUserId,
       name: null,
       email: null,
     };
 
     try {
-      const users = await getUsersByIds([ challenge.user_id ]);
-      creator = users[ challenge.user_id ] ?? creator;
+      const users = await getUsersByIds([ creatorUserId ]);
+      creator = users[ creatorUserId ] ?? creator;
     } catch (err) {
       console.warn("[user-svc]", err.message);
     }
@@ -479,7 +481,7 @@ exports.detail = async (req, res, next) => {
     res.status(200).json({
       challenge_id: challenge.challenge_id,
       title: challenge.title,
-      is_owner: userId === challenge.user_id,
+      is_owner: Number(userId) === Number(challenge.user_id),
       description: challenge.description,
       age_range: `${challenge.minimum_age} ~ ${challenge.maximum_age}`,
       maximum_people: challenge.maximum_people,
