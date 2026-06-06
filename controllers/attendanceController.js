@@ -266,7 +266,7 @@ exports.checkAbsence = async (req, res, next) => {
           model: ParticipatingChallenge,
           as: "participant",
           attributes: [],
-          where: { user_id }
+          where: { user_id: userId }
         }],
 
         where: {
