@@ -23,6 +23,7 @@ const {
   publishChallengeStateUpdated,
   publishChallengeDeleted,
 } = require("../queues/challengeEventPublisher");
+const { getUsersByIds } = require("../services/userServiceClient");
 
 /** ---------------- 공용 헬퍼: KST 기준 현재시각 & 자동 마감 ---------------- **/
 function nowKST() {
