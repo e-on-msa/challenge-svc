@@ -7,7 +7,7 @@ exports.getUsersByIds = async (userIds) => {
     return {};
   }
 
-  const response = await axios.get(`${USER_SERVICE_URL}/api/users/batch`, {
+  const response = await axios.get(`${USER_SERVICE_URL}/internal/users/batch`, {
     params: {
       ids: userIds.join(","),
     },
