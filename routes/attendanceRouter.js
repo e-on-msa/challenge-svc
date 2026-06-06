@@ -11,6 +11,6 @@ router.patch("/:id", isLoggedIn, ctrl.update);
 router.delete("/:id", isLoggedIn, ctrl.remove);
 
 // 최근 7일 이내 결석 여부 조회
-router.get("/check-absence", ctrl.checkAbsence);
+router.get("/check-absence", isLoggedIn, ctrl.checkAbsence);
 
 module.exports = router;

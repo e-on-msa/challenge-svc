@@ -250,10 +250,10 @@ exports.remove = async (req, res, next) => {
  */
 exports.checkAbsence = async (req, res, next) => {
   try {
-    const { user_id } = req.query;
+    const userId = req.user?.user_id;
 
-    if (!user_id) {
-      return res.status(400).json({ error: "user_id는 필수입니다." });
+    if (!userId) {
+      return res.status(401).json({ error: "로그인이 필요합니다." });
     }
 
     const sevenDaysAgo = new Date();
