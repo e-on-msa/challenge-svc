@@ -21,13 +21,13 @@ router.post(
 );
 
 // 챌린지 목록 조회
-router.get("/", challengeCtrl.list);
+router.get("/", isLoggedIn, challengeCtrl.list);
 
 // 챌린지 상태 변경
 router.patch("/:id/state", isLoggedIn, challengeCtrl.changeState);
 
 // 챌린지 상세 조회
-router.get("/:id", challengeCtrl.detail);
+router.get("/:id", isLoggedIn, challengeCtrl.detail);
 
 // 챌린지 수정
 router.patch("/:id", isLoggedIn, challengeCtrl.update);
