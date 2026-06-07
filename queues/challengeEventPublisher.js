@@ -132,6 +132,7 @@ async function publishChallengeStateUpdated(challenge, previousState) {
   });
 }
 
+// 향후에 사용할 것을 대비하여 미리 만들어 놓음
 /**
  * 챌린지 삭제 이벤트 발행
  * (challenge.deleted)
