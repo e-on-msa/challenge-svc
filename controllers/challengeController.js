@@ -559,16 +559,6 @@ exports.update = async (req, res, next) => {
       }
     });
 
-    // challenge_state 변경 허용
-    if (body.challenge_state !== undefined) {
-      const allowed = ["ACTIVE", "CLOSED", "CANCELLED"];
-
-      if (!allowed.includes(body.challenge_state)) {
-        return res.status(400).json({ error: "잘못된 상태 값" });
-      }
-      challenge.challenge_state = body.challenge_state;
-    }
-
     // days 선검증
     if (body.days !== undefined && !Array.isArray(body.days)) {
       return res.status(400).json({ error: "days는 배열이어야 합니다." });
@@ -616,10 +606,6 @@ exports.update = async (req, res, next) => {
     
     await challenge.reload();
 
-    const stateUpdated =
-      body.challenge_state !== undefined &&
-      previousState !== challenge.challenge_state;
-
     const contentUpdated =
       hasGeneralUpdate || hasRelationUpdate;
 
@@ -629,15 +615,6 @@ exports.update = async (req, res, next) => {
         await publishChallengeUpdated(challenge);
       } catch (eventErr) {
         console.error("[RabbitMQ] challenge.updated publish failed:", eventErr);
-      }
-    }
-
-    if (stateUpdated) {
-      try {
-        // challenge.state.updated 이벤트 발행
-        await publishChallengeStateUpdated(challenge, previousState);
-      } catch (eventErr) {
-        console.error("[RabbitMQ] challenge.state.updated publish failed:", eventErr);
       }
     }
 
