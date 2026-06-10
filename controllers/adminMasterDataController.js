@@ -194,3 +194,155 @@ exports.deleteVision = async (req, res, next) => {
     next(err);
   }
 };
+
+/** ---------------- 관심사 카테고리 (InterestCategory) ---------------- **/
+/** --- 하위 관심사가 있으면 수정·삭제 차단 → user-svc 이벤트 발행 불필요 --- */
+
+// 관심사 카테고리 생성 (이벤트 발행 불필요)
+exports.createInterestCategory = async (req, res, next) => {
+  try {
+    const { category_code, category_name } = req.body;
+
+    if (!category_code || !category_name) {
+      return res.status(400).json({ message: "category_code, category_name은 필수입니다." });
+    }
+
+    const exists = await InterestCategory.findByPk(category_code);
+    if (exists) {
+      return res.status(409).json({ message: "이미 존재하는 카테고리 코드입니다." });
+    }
+
+    await InterestCategory.create({ category_code, category_name });
+
+    return res.status(201).json({ category_code });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 관심사 카테고리 수정
+exports.updateInterestCategory = async (req, res, next) => {
+  try {
+    const { code } = req.params;
+    const { category_name } = req.body;
+
+    if (!category_name) {
+      return res.status(400).json({ message: "category_name은 필수입니다." });
+    }
+
+    const category = await InterestCategory.findByPk(code);
+    if (!category) {
+      return res.status(404).json({ message: "존재하지 않는 카테고리입니다." });
+    }
+
+    const count = await Interests.count({ where: { category_code: code } });
+    if (count > 0) {
+      return res.status(409).json({ message: "해당 카테고리에 속한 관심사가 있어 수정할 수 없습니다." });
+    }
+
+    await category.update({ category_name });
+
+    return res.json({ message: "수정되었습니다." });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 관심사 카테고리 삭제
+exports.deleteInterestCategory = async (req, res, next) => {
+  try {
+    const { code } = req.params;
+
+    const category = await InterestCategory.findByPk(code);
+    if (!category) {
+      return res.status(404).json({ message: "존재하지 않는 카테고리입니다." });
+    }
+
+    const count = await Interests.count({ where: { category_code: code } });
+    if (count > 0) {
+      return res.status(409).json({ message: "해당 카테고리에 속한 관심사가 있어 삭제할 수 없습니다." });
+    }
+
+    await category.destroy();
+
+    return res.json({ message: "삭제되었습니다." });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/** ---------------- 진로희망 카테고리 (VisionCategory) ---------------- **/
+/** --- 하위 진로희망이 있으면 수정·삭제 차단 → user-svc 이벤트 발행 불필요 --- */
+
+// 진로희망 카테고리 생성 (이벤트 발행 불필요)
+exports.createVisionCategory = async (req, res, next) => {
+  try {
+    const { category_code, category_name } = req.body;
+
+    if (!category_code || !category_name) {
+      return res.status(400).json({ message: "category_code, category_name은 필수입니다." });
+    }
+
+    const exists = await VisionCategory.findByPk(category_code);
+    if (exists) {
+      return res.status(409).json({ message: "이미 존재하는 카테고리 코드입니다." });
+    }
+
+    await VisionCategory.create({ category_code, category_name });
+
+    return res.status(201).json({ category_code });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 진로희망 카테고리 수정
+exports.updateVisionCategory = async (req, res, next) => {
+  try {
+    const { code } = req.params;
+    const { category_name } = req.body;
+
+    if (!category_name) {
+      return res.status(400).json({ message: "category_name은 필수입니다." });
+    }
+
+    const category = await VisionCategory.findByPk(code);
+    if (!category) {
+      return res.status(404).json({ message: "존재하지 않는 카테고리입니다." });
+    }
+
+    const count = await Visions.count({ where: { category_code: code } });
+    if (count > 0) {
+      return res.status(409).json({ message: "해당 카테고리에 속한 진로희망이 있어 수정할 수 없습니다." });
+    }
+
+    await category.update({ category_name });
+
+    return res.json({ message: "수정되었습니다." });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// 진로희망 카테고리 삭제
+exports.deleteVisionCategory = async (req, res, next) => {
+  try {
+    const { code } = req.params;
+
+    const category = await VisionCategory.findByPk(code);
+    if (!category) {
+      return res.status(404).json({ message: "존재하지 않는 카테고리입니다." });
+    }
+
+    const count = await Visions.count({ where: { category_code: code } });
+    if (count > 0) {
+      return res.status(409).json({ message: "해당 카테고리에 속한 진로희망이 있어 삭제할 수 없습니다." });
+    }
+
+    await category.destroy();
+
+    return res.json({ message: "삭제되었습니다." });
+  } catch (err) {
+    next(err);
+  }
+};
