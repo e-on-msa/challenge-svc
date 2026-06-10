@@ -1,56 +1,19 @@
-const amqp = require("amqplib");
+const { publishEvent } = require("./rabbitPublisher");
 
-const RABBITMQ_URL = process.env.RABBITMQ_URL || "amqp://localhost";
 const EXCHANGE = process.env.CHALLENGE_EVENT_EXCHANGE || "eon.events";
 
-let connection;
-let channel;
-
 /**
- * RabbitMQ 채널 생성
- * 최초 호출 시 연결 생성 후 재사용
- */
-async function getChannel() {
-  if (channel) return channel;
-
-  connection = await amqp.connect(RABBITMQ_URL);
-  channel = await connection.createChannel();
-
-  await channel.assertExchange(EXCHANGE, "topic", {
-    durable: true,
-  });
-
-  return channel;
-}
-
-/**
- * 공통 챌린지 이벤트 발행
+ * 챌린지 이벤트 발행 공통 함수
  */
 async function publishChallengeEvent(routingKey, payload) {
-  const ch = await getChannel();
-
-  const eventPayload = {
-    event: routingKey,
-    payload,
-    occurred_at: new Date().toISOString(),
-  };
-
-  ch.publish(
-    EXCHANGE,
-    routingKey,
-    Buffer.from(JSON.stringify(eventPayload)),
-    {
-      persistent: true,
-      contentType: "application/json",
-    }
-  );
-
-  console.log(`[RabbitMQ] published: ${routingKey}`, payload);
+  await publishEvent(EXCHANGE, routingKey, payload);
 }
 
 /**
- * 챌린지 엔티티를 이벤트 전송용 payload로 변환
- * (관심사/진로희망 포함)
+ * 챌린지 엔티티를 이벤트 Payload 형태로 변환
+ *
+ * 관심사/진로희망 태그를 함께 포함하여
+ * 이벤트 구독 서비스가 추가 조회 없이 사용 가능하도록 구성
  */
 async function toChallengePayload(challenge) {
   const full =
@@ -58,7 +21,7 @@ async function toChallengePayload(challenge) {
       ? await challenge.reload({
           include: [
             { association: "interests", through: { attributes: [] } },
-            { association: "visions", through: { attributes: [] }},
+            { association: "visions", through: { attributes: [] } },
           ],
         })
       : challenge;
@@ -81,50 +44,34 @@ async function toChallengePayload(challenge) {
     end_date: json.end_date,
     challenge_state: json.challenge_state,
     status: json.status,
+
+    // 관심사
     interest_ids: json.interests?.map((i) => i.interest_id) || [],
     interest_names: json.interests?.map((i) => i.interest_detail) || [],
+
+    // 진로희망
     vision_ids: json.visions?.map((v) => v.vision_id) || [],
     vision_names: json.visions?.map((v) => v.vision_detail) || [],
   };
 }
 
-/**
- * 챌린지 생성 이벤트 발행
- * (challenge.created)
- */
 async function publishChallengeCreated(challenge) {
   const payload = await toChallengePayload(challenge);
-
   await publishChallengeEvent("challenge.created", payload);
 }
 
-/**
- * 챌린지 승인 이벤트 발행
- * (challenge.approved)
- */
 async function publishChallengeApproved(challenge) {
   const payload = await toChallengePayload(challenge);
-
   await publishChallengeEvent("challenge.approved", payload);
 }
 
-/**
- * 챌린지 수정 이벤트 발행
- * (challenge.updated)
- */
 async function publishChallengeUpdated(challenge) {
   const payload = await toChallengePayload(challenge);
-
   await publishChallengeEvent("challenge.updated", payload);
 }
 
-/**
- * 챌린지 상태 변경 이벤트 발행
- * (challenge.state.updated)
- */
 async function publishChallengeStateUpdated(challenge, previousState) {
   const payload = await toChallengePayload(challenge);
-
   await publishChallengeEvent("challenge.state.updated", {
     ...payload,
     previous_state: previousState,
@@ -132,11 +79,6 @@ async function publishChallengeStateUpdated(challenge, previousState) {
   });
 }
 
-// 향후에 사용할 것을 대비하여 미리 만들어 놓음
-/**
- * 챌린지 삭제 이벤트 발행
- * (challenge.deleted)
- */
 async function publishChallengeDeleted(challenge) {
   await publishChallengeEvent("challenge.deleted", {
     challenge_id: challenge.challenge_id,
@@ -144,10 +86,6 @@ async function publishChallengeDeleted(challenge) {
   });
 }
 
-/**
- * 챌린지 참여 신청 이벤트 발행
- * (challenge.participation.created)
- */
 async function publishChallengeParticipationCreated(participation) {
   await publishChallengeEvent("challenge.participation.created", {
     challenge_id: participation.challenge_id,

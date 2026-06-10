@@ -26,6 +26,7 @@ app.use("/api/visions", require("./routes/visionRouter"));
 app.use("/api/interests", require("./routes/interestRouter"));
 
 app.use("/internal", require("./routes/internalChallengeRouter"));
+app.use("/internal/admin/master-data", require("./routes/adminMasterDataRouter"));
 
 // 에러 핸들러
 app.use((err, req, res, next) => {
