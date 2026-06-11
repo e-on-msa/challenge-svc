@@ -62,11 +62,22 @@ exports.join = async (req, res, next) => {
       return res.status(400).json({ error: "참여 인원이 초과되었습니다." });
     }
 
-    const participation = await ParticipatingChallenge.create({
-      challenge_id,
-      user_id: userId,
-      participating_state: "신청",
+    const cancelled = await ParticipatingChallenge.findOne({
+      where: { challenge_id, user_id: userId, participating_state: "취소" },
     });
+
+    let participation;
+    if (cancelled) {
+      cancelled.participating_state = "신청";
+      await cancelled.save();
+      participation = cancelled;
+    } else {
+      participation = await ParticipatingChallenge.create({
+        challenge_id,
+        user_id: userId,
+        participating_state: "신청",
+      });
+    }
 
     // challenge.participation.created 이벤트 발행
     try {
