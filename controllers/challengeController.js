@@ -518,7 +518,6 @@ exports.update = async (req, res, next) => {
     const userId = Number(req.user.user_id);
 
     const challenge = await Challenge.findByPk(id);
-    const previousState = challenge.challenge_state;
 
     if (!challenge) {
       return res.status(404).json({ error: "챌린지를 찾을 수 없습니다." });
@@ -527,6 +526,8 @@ exports.update = async (req, res, next) => {
     if (challenge.user_id !== userId) {
       return res.status(403).json({ error: "챌린지 수정 권한이 없습니다." });
     }
+
+    const previousState = challenge.challenge_state;
 
     if (body.challenge_state !== undefined) {
       const allowedStates = ["ACTIVE", "CLOSED", "CANCELLED"];

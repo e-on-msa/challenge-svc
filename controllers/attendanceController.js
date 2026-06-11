@@ -188,7 +188,7 @@ exports.update = async (req, res, next) => {
         include: [{
             model: ParticipatingChallenge,
             as: "participant",
-            attributes: ["user_id"]
+            attributes: ["user_id", "challenge_id"],
         }],
     });
 
@@ -196,7 +196,11 @@ exports.update = async (req, res, next) => {
       return res.status(404).json({ error: "출석 기록을 찾을 수 없습니다." });
     }
 
-    if (!requesterId || Number(attendance.participant.user_id) !== Number(requesterId)) {
+    const challenge = await Challenge.findByPk(attendance.participant.challenge_id);
+    const isParticipant = Number(attendance.participant.user_id) === Number(requesterId);
+    const isHost = challenge && Number(challenge.user_id) === Number(requesterId);
+
+    if (!requesterId || (!isParticipant && !isHost)) {
       return res.status(403).json({ error: "출석 기록 수정 권한이 없습니다." });
     }
 
@@ -237,7 +241,7 @@ exports.remove = async (req, res, next) => {
         include: [{
             model: ParticipatingChallenge,
             as: "participant",
-            attributes: ["user_id"]
+            attributes: ["user_id", "challenge_id"],
         }],
     });
 
@@ -245,7 +249,11 @@ exports.remove = async (req, res, next) => {
       return res.status(404).json({ error: "출석 기록을 찾을 수 없습니다." });
     }
 
-    if (!requesterId || Number(attendance.participant.user_id) !== Number(requesterId)) {
+    const challenge = await Challenge.findByPk(attendance.participant.challenge_id);
+    const isParticipant = Number(attendance.participant.user_id) === Number(requesterId);
+    const isHost = challenge && Number(challenge.user_id) === Number(requesterId);
+
+    if (!requesterId || (!isParticipant && !isHost)) {
       return res.status(403).json({ error: "출석 기록 삭제 권한이 없습니다." });
     }
 
