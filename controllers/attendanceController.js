@@ -36,7 +36,7 @@ exports.add = async (req, res, next) => {
     }
 
     // 출석 기록 생성 권한 검증
-    if (!requesterId || participation.user_id !== requesterId) {
+    if (!requesterId || Number(participation.user_id) !== Number(requesterId)) {
       return res.status(403).json({ error: "출석 기록 생성 권한이 없습니다." });
     }
 
@@ -178,6 +178,11 @@ exports.update = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { attendance_state, memo } = req.body;
+    const requesterId = req.user?.user_id;
+    
+    if (!requesterId || Number(attendance.participant.user_id) !== Number(requesterId)) {
+      return res.status(403).json({ error: "출석 기록 수정 권한이 없습니다." });
+    }
 
     const attendance = await ParticipatingAttendance.findByPk(id, {
         include: [{
@@ -222,6 +227,11 @@ exports.update = async (req, res, next) => {
 exports.remove = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const requesterId = req.user?.user_id;
+
+    if (!requesterId || Number(attendance.participant.user_id) !== Number(requesterId)) {
+      return res.status(403).json({ error: "출석 기록 삭제 권한이 없습니다." });
+    }
 
     const attendance = await ParticipatingAttendance.findByPk(id, {
         include: [{
@@ -266,7 +276,7 @@ exports.checkAbsence = async (req, res, next) => {
           model: ParticipatingChallenge,
           as: "participant",
           attributes: [],
-          where: { user_id: userId }
+          where: { user_id: Number(userId) }
         }],
 
         where: {
