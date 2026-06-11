@@ -515,9 +515,10 @@ exports.update = async (req, res, next) => {
   try {
     const { id } = req.params;
     const body = req.body;
-    const userId = req.user.user_id;
+    const userId = Number(req.user.user_id);
 
     const challenge = await Challenge.findByPk(id);
+    const previousState = challenge.challenge_state;
 
     if (!challenge) {
       return res.status(404).json({ error: "챌린지를 찾을 수 없습니다." });
@@ -527,7 +528,17 @@ exports.update = async (req, res, next) => {
       return res.status(403).json({ error: "챌린지 수정 권한이 없습니다." });
     }
 
-    const previousState = challenge.challenge_state;
+    if (body.challenge_state !== undefined) {
+      const allowedStates = ["ACTIVE", "CLOSED", "CANCELLED"];
+
+      if (!allowedStates.includes(body.challenge_state)) {
+        return res.status(400).json({
+          error: "challenge_state는 ACTIVE, CLOSED, CANCELLED 중 하나여야 합니다.",
+        });
+      }
+
+      challenge.challenge_state = body.challenge_state;
+    }
 
     const updatable = [
       "title",
