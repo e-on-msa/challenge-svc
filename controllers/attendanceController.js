@@ -35,8 +35,12 @@ exports.add = async (req, res, next) => {
       return res.status(404).json({ error: "참여 기록을 찾을 수 없습니다." });
     }
 
-    // 출석 기록 생성 권한 검증
-    if (!requesterId || Number(participation.user_id) !== Number(requesterId)) {
+    // 출석 기록 생성 권한 검증 (참여자 본인 또는 챌린지 개설자)
+    const challenge = await Challenge.findByPk(participation.challenge_id);
+    const isParticipant = Number(participation.user_id) === Number(requesterId);
+    const isHost = challenge && Number(challenge.user_id) === Number(requesterId);
+
+    if (!requesterId || (!isParticipant && !isHost)) {
       return res.status(403).json({ error: "출석 기록 생성 권한이 없습니다." });
     }
 
@@ -179,10 +183,6 @@ exports.update = async (req, res, next) => {
     const { id } = req.params;
     const { attendance_state, memo } = req.body;
     const requesterId = req.user?.user_id;
-    
-    if (!requesterId || Number(attendance.participant.user_id) !== Number(requesterId)) {
-      return res.status(403).json({ error: "출석 기록 수정 권한이 없습니다." });
-    }
 
     const attendance = await ParticipatingAttendance.findByPk(id, {
         include: [{
@@ -194,6 +194,10 @@ exports.update = async (req, res, next) => {
 
     if (!attendance) {
       return res.status(404).json({ error: "출석 기록을 찾을 수 없습니다." });
+    }
+
+    if (!requesterId || Number(attendance.participant.user_id) !== Number(requesterId)) {
+      return res.status(403).json({ error: "출석 기록 수정 권한이 없습니다." });
     }
 
     if (attendance_state !== undefined) {
@@ -229,10 +233,6 @@ exports.remove = async (req, res, next) => {
     const { id } = req.params;
     const requesterId = req.user?.user_id;
 
-    if (!requesterId || Number(attendance.participant.user_id) !== Number(requesterId)) {
-      return res.status(403).json({ error: "출석 기록 삭제 권한이 없습니다." });
-    }
-
     const attendance = await ParticipatingAttendance.findByPk(id, {
         include: [{
             model: ParticipatingChallenge,
@@ -243,6 +243,10 @@ exports.remove = async (req, res, next) => {
 
     if (!attendance) {
       return res.status(404).json({ error: "출석 기록을 찾을 수 없습니다." });
+    }
+
+    if (!requesterId || Number(attendance.participant.user_id) !== Number(requesterId)) {
+      return res.status(403).json({ error: "출석 기록 삭제 권한이 없습니다." });
     }
 
     await attendance.destroy();
